@@ -41,9 +41,11 @@ function SokoLvlIndividual(cfg::NamedTuple, ind::String)::SokoLvlIndividual
 end
 
 """
-mutate(parent::SokoLvlIndividual, m_rate::Float64). To use, define
-    mutate(parent::SokoLvlIndividual) = mutate(parent, m_rate) with configured m_rate
-for a Boolean individual, this random flips the bits of the parent
+    mutate(parent::SokoLvlIndividual, m_rate::Float64)
+
+To use, define
+    mutate(parent::SokoLvlIndividual) = mutate(parent, m_rate)
+with configured m_rate for a Boolean individual, this random flips the bits of the parent
 """
 function mutate(parent::SokoLvlIndividual, m_rate::Float64)
     inds = rand(length(parent.genes)) .<= m_rate
@@ -51,28 +53,51 @@ function mutate(parent::SokoLvlIndividual, m_rate::Float64)
     get_child(parent, genes)
 end
 
+"""
+    transcript_sokolvl_genes(sokolvl_ind::SokoLvlIndividual)
+
+This function allow to get the Sokoban level as a string that we will be then able to load
+with the Griddly package. This function might not work with SokoLvlIndividual if they were
+not passed through the apply_sokolvl_constraint! function.
+"""
 function transcript_sokolvl_genes(sokolvl_ind::SokoLvlIndividual)
+    # first get the size of the level
     width = sokolvl_ind.width
     height = sokolvl_ind.height
+    # get the list of objects the level may include
     objects_char_list = sokolvl_ind.objects_char_list
     nb_object = length(objects_char_list)
+
     lvl_str = """"""
+    # for each position in the level grid
     for y_pos in 1:height
         for x_pos in 1:width
+            # by default the tile is nothing
             object_in_x_y = "."
             for i in 1:nb_object
+                # if there is an object at this pos replace with the corresponding object char
                 if sokolvl_ind.genes[x_pos + (y_pos-1)*width + height*width*(i-1)] == 1
                     object_in_x_y = objects_char_list[i]
                 end
             end
             lvl_str = string(lvl_str,object_in_x_y)
         end
+        # need a new line every width step
         lvl_str = string(lvl_str,"\n")
     end
     return lvl_str
 end
 
-function apply_sokolvl_constraint!(sokolvl_ind)
+"""
+    apply_sokolvl_constraint!(sokolvl_ind::SokoLvlIndividual)
+
+This function ensure that we have one (and only one) agent on the grid.
+It also ensure that a cell in the grid is not occupied by two objects at
+the same time.It does so by making random choice when there is several
+possibilities.  
+"""
+function apply_sokolvl_constraint!(sokolvl_ind::SokoLvlIndividual)
+    # get some properties of our grid
     width = sokolvl_ind.width
     height = sokolvl_ind.height
     objects_char_list = sokolvl_ind.objects_char_list
@@ -98,13 +123,12 @@ function apply_sokolvl_constraint!(sokolvl_ind)
         end
         sokolvl_ind.genes[pos_agent_to_keep + (agent_idx-1)*width*height] = 1
         pos_final_agent = pos_agent_to_keep
-    else
-        # only one element in pos agent
+    else # only one element in pos agent
         pos_final_agent = pos_agent[1]
     end
 
-    # Now we ensure that there is no two similar tiles in a same position
-    # we only need to work with non agent object
+    # Now we ensure that there is not several objects in a same position
+    # we only need to work with non agent object, since we already freeze the agent pos
     non_agent_object_idx = [i for i in 1:length(objects_char_list)]
     deleteat!(non_agent_object_idx,agent_idx)
 
