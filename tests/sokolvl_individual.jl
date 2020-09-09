@@ -1,8 +1,3 @@
-using Griddly
-using Cambrian
-using Test
-include("../src/sokoban_level_individual.jl")
-
 #--------------------Set-up for tests--------------------
 cfg = Cambrian.get_config("tests/test.yaml")
 
@@ -47,6 +42,7 @@ Griddly.init!(game)
     observation = Griddly.observe(game)
     observation = convert(Array{Int8,3},Griddly.get_data(observation))
     println(observation)
+    println(observation[1])
     # test that after constraint are applied we get exactly 1 agent
     multiple_agent_genes = BitArray([0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 1 1 1 1 1 0 0 1 1 0 0 1 1 1 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 0 0 0 0 0])
     multiple_agent_ind = SokoLvlIndividual(multiple_agent_genes,cfg)
@@ -69,32 +65,56 @@ Griddly.init!(game)
 end
 
 #-----------------Check if it is well integrated with Cambrian----------------
-@testset "Random fitness" begin
-    e = Evolution{SokoLvlIndividual}(cfg;logfile=string("../logs/",cfg.id, ".csv"))
-    evaluate(e::Evolution) = random_evaluate(e)
-    populate(e::Evolution) = oneplus_populate(e)
+function count_box(ind::Individual)
+    width = ind.width
+    height = ind.height
+    start_box_idx = (1-1)*width*height+1
+    stop_box_idx = 1*width*height
+    nb_box = sum(ind.genes[start_box_idx:stop_box_idx])
+    return [nb_box]
+end
+# mutate must be overriden in the global scope (or use eval)
+mutate(i::SokoLvlIndividual) = mutate(i, cfg.m_rate)
+function modified_one_plus(e::AbstractEvolution)
+    p1 = sort(e.population)[end]
+    e.population[1] = p1
+    for i in 2:e.config.n_population
+        e.population[i] = mutate(p1)
+        apply_sokolvl_constraint!(e.population[i])
+    end
+end
+populate(e::OnePlusEvo) = modified_one_plus(e)
+function test_one_plus_evo()
+    e = OnePlusEvo{SokoLvlIndividual}(cfg,count_box;logfile=string("../logs/","test_logs", ".csv"))
+
+    @test length(e.population) == cfg.n_population
 
     for ind in e.population
         apply_sokolvl_constraint!(ind)
     end
 
-    @test length(e.population) == cfg.n_population
-    for i in e.population
-        @test all(i.fitness .== -Inf)
-    end
-
     evaluate(e)
     fits = [i.fitness[1] for i in e.population]
     evaluate(e)
-    # random fitness, all values should change
+    # no values should change between two evaluation
     for i in eachindex(e.population)
-        @test fits[i] != e.population[i].fitness[1]
+        @test fits[i] == e.population[i].fitness[1]
     end
 
-    fits = copy([i.fitness[:] for i in e.population])
-    step!(e)
-    # random fitness, all values should change
-    for i in eachindex(e.population)
-        @test fits[i] != e.population[i].fitness[1]
-    end
+    run!(e)
+
+    best = sort(e.population)[end]
+    println("Final fitness: ", best.fitness[1])
+    println(best.genes)
+    println(length(best.genes))
+    lvl_str = transcript_sokolvl_genes(best)
+    println(lvl_str)
+    Griddly.load_level_string!(grid,lvl_str)
+    Griddly.reset!(game)
+    observation = Griddly.observe(game)
+    observation = convert(Array{Int8,3},Griddly.get_data(observation))
+    println(observation)
+end
+@testset "Nb box fitness" begin
+    test_one_plus_evo()
 end

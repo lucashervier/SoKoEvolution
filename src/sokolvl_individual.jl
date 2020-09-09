@@ -40,6 +40,10 @@ function SokoLvlIndividual(cfg::NamedTuple, ind::String)::SokoLvlIndividual
     SokoLvlIndividual(BitArray(dict["genes"]),cfg)
 end
 
+function get_child(parent::Individual, genes::AbstractArray)
+    typeof(parent)(genes,  -Inf*ones(1),parent.width,parent.height,parent.objects_char_list,parent.agent_idx)
+end
+
 """
     mutate(parent::SokoLvlIndividual, m_rate::Float64)
 
@@ -94,7 +98,7 @@ end
 This function ensure that we have one (and only one) agent on the grid.
 It also ensure that a cell in the grid is not occupied by two objects at
 the same time.It does so by making random choice when there is several
-possibilities.  
+possibilities.
 """
 function apply_sokolvl_constraint!(sokolvl_ind::SokoLvlIndividual)
     # get some properties of our grid

@@ -1,7 +1,6 @@
-width: 4
-height: 4
-objects_char_list: ["b","w","h","A"]
-agent_idx: 4
+width: 5
+height: 5
+nb_object: 4
 d_fitness: 1
 n_elite: 1
 m_rate: 0.3
