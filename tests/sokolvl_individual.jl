@@ -62,6 +62,13 @@ Griddly.init!(game)
         end
         @test nb_object_in_pos <= 1
     end
+    # test that if an object is not present there will be some flips
+    wall_missing_genes = BitArray([1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 0 0 0 0])
+    wall_missing_ind = SokoLvlIndividual(wall_missing_genes,cfg)
+    apply_sokolvl_constraint!(wall_missing_ind)
+    nb_wall = sum(wall_missing_genes[17:32])
+    @test nb_wall == 1
+    println(wall_missing_ind.genes)
 end
 
 #-----------------Check if it is well integrated with Cambrian----------------

@@ -135,7 +135,11 @@ function apply_sokolvl_constraint!(sokolvl_ind::SokoLvlIndividual)
     # We only need to work with non agent object, since we already freeze the agent pos
     non_agent_object_idx = [i for i in 1:length(objects_char_list)]
     deleteat!(non_agent_object_idx,agent_idx)
-
+    # we will need a dict Object_idx=>[list_of_pos]
+    archives = Dict{Int,Vector{Int64}}()
+    archives[agent_idx] = [pos_final_agent]
+    # add a key for empty pos
+    archives[0] = []
     for pos in 1:width*height
         # all object at the agent position flip bit to zero
         if pos==pos_final_agent
@@ -159,6 +163,55 @@ function apply_sokolvl_constraint!(sokolvl_ind::SokoLvlIndividual)
                     sokolvl_ind.genes[pos + (object_idx-1)*width*height] = 0
                 end
                 sokolvl_ind.genes[pos + (object_idx_to_keep-1)*width*height] = 1
+                # fill the archives dict
+                if object_idx_to_keep in keys(archives)
+                    push!(archives[object_idx_to_keep],pos)
+                else
+                    archives[object_idx_to_keep] = [pos]
+                end
+            elseif nb_object_at_pos == 1
+                if object_idx_at_pos[1] in keys(archives)
+                    push!(archives[object_idx_at_pos[1]],pos)
+                else
+                    archives[object_idx_at_pos[1]] = [pos]
+                end
+            else
+                push!(archives[0],pos)
+            end
+        end
+    end
+    # now with the archives we will ensure that every object is represented
+    for object_idx in non_agent_object_idx
+        # if an object is not in the grid
+        if !(object_idx in keys(archives))
+            # if there is empty location we ramdomly choose one to put our object in
+            if (length(archives[0])>0)
+                empty_pos_idx = rand(1:length(archives[0]))
+                empty_pos = archives[0][empty_pos_idx]
+                # add this to the genes
+                sokolvl_ind.genes[empty_pos + (object_idx-1)*width*height] = 1
+                # add to the archives and delete from empty pos
+                deleteat!(archives[0],empty_pos_idx)
+                archives[object_idx] = [empty_pos]
+            # if there is not location we are gonna take one position of the object the most reccurent
+            else
+                # first we need to get the key with the longest position vector
+                max_length = 0
+                max_key = 0
+                for key in keys(archives)
+                    if (length(archives[key]) > max_length && key!=agent_idx)
+                        max_length = length(archives[key])
+                        max_key = key
+                    end
+                end
+                replace_pos_idx = rand(1:length(archives[max_key]))
+                replace_pos = archives[max_key][replace_pos_idx]
+                # modify the genes accordingly
+                sokolvl_ind.genes[replace_pos + (object_idx-1)*width*height] = 1
+                sokolvl_ind.genes[replace_pos + (max_key-1)*width*height] = 0
+                # add to the archives and delete from empty pos
+                deleteat!(archives[max_key],replace_pos_idx)
+                archives[object_idx] = [replace_pos]
             end
         end
     end
