@@ -76,7 +76,10 @@ end
 Apply the model to our observation and choose the action idx with the maximum value.
 """
 function choose_action(observation,sokoagent::SokoAgent)
-    obs = reshape(observation,(sokoagent.width,sokoagent.height,sokoagent.nb_object,1))
-    output = sokoagent.model(obs)
+    # obs = reshape(observation,(sokoagent.width,sokoagent.height,sokoagent.nb_object,1))
+    obs3 = permutedims(observation,[3,2,1])
+    obs4 = Float32.(reshape(obs3,(sokoagent.width,sokoagent.height,sokoagent.nb_object,1)))
+
+    output = sokoagent.model(obs4)
     return argmax(output)[1]-1
 end

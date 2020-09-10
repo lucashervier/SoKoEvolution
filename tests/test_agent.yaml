@@ -2,9 +2,9 @@ width: 5
 height: 5
 nb_object: 4
 d_fitness: 1
-n_elite: 1
+n_elite: 3
 m_rate: 0.3
-n_population: 10
+n_population: 20
 n_gen: 20
 log_gen: 0
 save_gen: 0
