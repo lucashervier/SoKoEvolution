@@ -1,7 +1,3 @@
-function get_child(parent::Individual, genes::AbstractArray)
-    typeof(parent)(genes,  -Inf*ones(1),parent.width,parent.height,parent.nb_object,deepcopy(parent.model))
-end
-
 "SokoAgent : Individual class using a floating point genotype in [0, 1]"
 struct SokoAgent <: Cambrian.Individual
     genes::Array{Float64}
@@ -49,6 +45,10 @@ function SokoAgent(genes::Array{Float64}, model, cfg::NamedTuple)::SokoAgent
     end
 end
 
+function get_child(parent::Individual, genes::AbstractArray)
+    typeof(parent)(genes,  -Inf*ones(1),parent.width,parent.height,parent.nb_object,deepcopy(parent.model))
+end
+
 """
     mutate(parent::SokoAgent, m_rate::Float64)
 
@@ -71,6 +71,10 @@ function transcript_sokoagent_genes!(sokoagent::SokoAgent)
     load_weights_from_array!(sokoagent.model,sokoagent.genes)
 end
 
+"""
+    choose_action(observation,sokoagent::SokoAgent)
+Apply the model to our observation and choose the action idx with the maximum value.
+"""
 function choose_action(observation,sokoagent::SokoAgent)
     obs = reshape(observation,(sokoagent.width,sokoagent.height,sokoagent.nb_object,1))
     output = sokoagent.model(obs)

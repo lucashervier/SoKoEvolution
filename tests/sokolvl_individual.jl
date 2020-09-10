@@ -65,6 +65,9 @@ Griddly.init!(game)
 end
 
 #-----------------Check if it is well integrated with Cambrian----------------
+# mutate must be overriden in the global scope (or use eval)
+mutate(i::SokoLvlIndividual) = mutate(i, cfg.m_rate)
+
 function count_box(ind::Individual)
     width = ind.width
     height = ind.height
@@ -73,8 +76,7 @@ function count_box(ind::Individual)
     nb_box = sum(ind.genes[start_box_idx:stop_box_idx])
     return [nb_box]
 end
-# mutate must be overriden in the global scope (or use eval)
-mutate(i::SokoLvlIndividual) = mutate(i, cfg.m_rate)
+
 function modified_one_plus(e::AbstractEvolution)
     p1 = sort(e.population)[end]
     e.population[1] = p1

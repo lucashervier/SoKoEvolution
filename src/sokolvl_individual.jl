@@ -131,8 +131,8 @@ function apply_sokolvl_constraint!(sokolvl_ind::SokoLvlIndividual)
         pos_final_agent = pos_agent[1]
     end
 
-    # Now we ensure that there is not several objects in a same position
-    # we only need to work with non agent object, since we already freeze the agent pos
+    # Now we ensure that there is not several objects in a same position and there is at least one occurence of each.
+    # We only need to work with non agent object, since we already freeze the agent pos
     non_agent_object_idx = [i for i in 1:length(objects_char_list)]
     deleteat!(non_agent_object_idx,agent_idx)
 
