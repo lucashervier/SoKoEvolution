@@ -40,7 +40,7 @@ function SokoLvlIndividual(cfg::NamedTuple, ind::String)::SokoLvlIndividual
     SokoLvlIndividual(BitArray(dict["genes"]),cfg)
 end
 
-function get_child(parent::Individual, genes::AbstractArray)
+function get_child(parent::SokoLvlIndividual, genes::AbstractArray)
     typeof(parent)(genes,  -Inf*ones(1),parent.width,parent.height,parent.objects_char_list,parent.agent_idx)
 end
 

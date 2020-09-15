@@ -45,7 +45,7 @@ function SokoAgent(genes::Array{Float64}, model, cfg::NamedTuple)::SokoAgent
     end
 end
 
-function get_child(parent::Individual, genes::AbstractArray)
+function get_child(parent::SokoAgent, genes::AbstractArray)
     typeof(parent)(genes,  -Inf*ones(1),parent.width,parent.height,parent.nb_object,deepcopy(parent.model))
 end
 
