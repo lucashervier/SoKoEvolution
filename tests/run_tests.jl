@@ -1,8 +1,10 @@
 using Griddly
 using Cambrian
 using Flux
+using JSON
 import Cambrian: mutate
 import Cambrian: populate
+import Cambrian: ind_parse
 using Test
 
 # include("../src/sokolvl_individual.jl")

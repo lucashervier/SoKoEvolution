@@ -59,6 +59,20 @@ Dense(64,4)
     end
 end
 
+# test if we can load an agent from file
+file_model = Chain(
+                    Dense(2,4)
+                    )
+file_path = "tests//test_agent_file.dna"
+@testset "SokoAgent From File" begin
+    indString = read("$file_path", String)
+    agent_file = SokoAgent(indString,file_model)
+    @test agent_file.genes == [0.0, 1.0, 0.0, 0.5, 0.7, 0.4, 0.3, 0.0]
+    @test agent_file.fitness == [100]
+    @test agent_file.width == 8
+    @test agent_file.height == 8
+    @test agent_file.nb_object == 4
+end
 #-----------------Check if it is well integrated with Cambrian----------------
 # mutate must be overriden in the global scope (or use eval)
 mutate(i::SokoAgent) = mutate(i, cfg.m_rate)

@@ -45,6 +45,11 @@ function SokoAgent(genes::Array{Float64}, model, cfg::NamedTuple)::SokoAgent
     end
 end
 
+function SokoAgent(st::String,model)
+    dict = ind_parse(st)
+    SokoAgent(Float64.(dict["genes"]), Float64.(dict["fitness"]), dict["width"], dict["height"],dict["nb_object"],deepcopy(model))
+end
+
 function get_child(parent::SokoAgent, genes::AbstractArray)
     typeof(parent)(genes,  -Inf*ones(1),parent.width,parent.height,parent.nb_object,deepcopy(parent.model))
 end
@@ -76,10 +81,9 @@ end
 Apply the model to our observation and choose the action idx with the maximum value.
 """
 function choose_action(observation,sokoagent::SokoAgent)
-    # obs = reshape(observation,(sokoagent.width,sokoagent.height,sokoagent.nb_object,1))
-    obs3 = permutedims(observation,[3,2,1])
-    obs4 = Float32.(reshape(obs3,(sokoagent.width,sokoagent.height,sokoagent.nb_object,1)))
+    obs = permutedims(observation,[3,2,1])
+    obs = Float32.(reshape(obs,(sokoagent.width,sokoagent.height,sokoagent.nb_object,1)))
 
-    output = sokoagent.model(obs4)
+    output = sokoagent.model(obs)
     return argmax(output)[1]
 end
