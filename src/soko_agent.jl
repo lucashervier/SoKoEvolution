@@ -81,5 +81,5 @@ function choose_action(observation,sokoagent::SokoAgent)
     obs4 = Float32.(reshape(obs3,(sokoagent.width,sokoagent.height,sokoagent.nb_object,1)))
 
     output = sokoagent.model(obs4)
-    return argmax(output)[1]-1
+    return argmax(output)[1]
 end

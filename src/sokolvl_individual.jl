@@ -57,6 +57,13 @@ function mutate(parent::SokoLvlIndividual, m_rate::Float64)
     get_child(parent, genes)
 end
 
+function crossover(parents::Vararg{SokoLvlIndividual})
+    i1 = parents[1]; i2 = parents[2]
+    cpoint = rand(2:(min(length(i1.genes), length(i2.genes)) - 1))
+    genes = vcat(i1.genes[1:cpoint], i2.genes[(cpoint+1):end])
+    get_child(parents[1], genes)
+end
+
 """
     transcript_sokolvl_genes(sokolvl_ind::SokoLvlIndividual)
 

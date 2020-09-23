@@ -7,6 +7,7 @@ using CSV
 using DataFrames
 using ProgressBars
 import Cambrian: mutate
+import Cambrian: crossover
 import Cambrian: populate
 import Cambrian: save_gen
 
@@ -25,7 +26,8 @@ game = Griddly.create_game(grid,Griddly.VECTOR)
 player1 = Griddly.register_player!(game,"Tux", Griddly.BLOCK_2D)
 Griddly.init!(game)
 
-cfg = Cambrian.get_config("cfg/first_expe.yaml")
+cfg_envs = Cambrian.get_config("cfg/first_expe_envs.yaml")
+cfg_agent = Cambrian.get_config("cfg/first_expe_agent.yaml")
 
 agent_model = Chain(
                     Conv((3,3),4=>1,pad=(1,1),relu),
@@ -36,10 +38,10 @@ agent_model = Chain(
                     )
 
 # Overrides of the mutate function
-mutate(i::SokoAgent) = mutate(i, cfg.p_mutation)
-mutate(i::SokoLvlIndividual) = mutate(i, cfg.p_mutation)
+mutate(i::SokoAgent) = mutate(i, cfg_agent.p_mutation)
+mutate(i::SokoLvlIndividual) = mutate(i, cfg_envs.p_mutation)
 
-selection(pop::Array{<:Individual}) = Cambrian.tournament_selection(pop, cfg.tournament_size)
+selection(pop::Array{<:Individual}) = Cambrian.tournament_selection(pop, cfg_envs.tournament_size)
 #-----------------------------Helpers-----------------------------#
 # Create a generic GAEvo for agent (because of their model)
 function initialize(itype::Type, model, cfg::NamedTuple)
@@ -89,17 +91,17 @@ function get_local_evaluation(envs::GAEvo{SokoLvlIndividual},agents::GAEvo{SokoA
 end
 
 function fitness_env(idx_env::Int64,local_eval::Array{Float64})
-    return [maximum(local_eval[:,idx_env])-minimum(local_eval[:,idx_env])]
+    return [maximum(local_eval[idx_env,:])-minimum(local_eval[idx_env,:])]
 end
 
 function fitness_agent(idx_agent::Int64,local_eval::Array{Float64})
-    return [mean(local_eval[idx_agent,:])]
+    return [mean(local_eval[:,idx_agent])]
 end
 
 # overrides evaluate function
 function evaluate(e1::AbstractEvolution, e2::AbstractEvolution)
     local_eval = get_local_evaluation(e1,e2)
-    path = "localfit/"
+    path = "localfit/expe_crossover_2"
     mkpath(path)
     CSV.write("$path/gen-$(e1.gen).csv",  DataFrame(local_eval), header=false)
     for i in eachindex(e1.population)
@@ -161,7 +163,7 @@ function step!(e1::AbstractEvolution,e2::AbstractEvolution)
         log_gen(e2)
     end
     if ((e1.config.save_gen > 0) && mod(e1.gen, e1.config.save_gen) == 0)
-        save_gen(e1,e2)
+        save_gen(e1,e2;id1="expe_crossover_2/envs",id2="expe_crossover_2/agents")
     end
 end
 
@@ -173,8 +175,8 @@ function run!(e1::AbstractEvolution,e2::AbstractEvolution)
 end
 
 #------------------------------------Main------------------------------------#
-envs = GAEvo{SokoLvlIndividual}(cfg,fitness_env;logfile=string("logs/","env_logs_first_expe", ".csv"))
-agents = GAEvo{SokoAgent}(agent_model,cfg,fitness_agent;logfile=string("logs/","agent_logs_first_expe", ".csv"))
+envs = GAEvo{SokoLvlIndividual}(cfg_envs,fitness_env;logfile=string("logs/","expe_crossover_2/env_logs", ".csv"))
+agents = GAEvo{SokoAgent}(agent_model,cfg_agent,fitness_agent;logfile=string("logs/","expe_crossover_2/agent_logs", ".csv"))
 
 run!(envs,agents)
 

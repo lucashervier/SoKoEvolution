@@ -11,7 +11,7 @@ gdy_path = joinpath(@__DIR__,"..","resources","games")
 gdy_reader = Griddly.GDYReader(image_path,shader_path)
 
 grid = Griddly.load!(gdy_reader,joinpath(gdy_path,"Single-Player/GVGAI/sokoban.yaml"))
-game = Griddly.create_game(grid,Griddly.VECTOR)
+game = Griddly.create_game(grid,Griddly.SPRITE_2D)
 player1 = Griddly.register_player!(game,"Tux", Griddly.BLOCK_2D)
 Griddly.init!(game)
 
@@ -44,15 +44,18 @@ Dense(64,4)
     Griddly.load_level_string!(grid,lvl_str)
     Griddly.reset!(game)
     observation = Griddly.observe(game)
-    observation = convert(Array{Int8,3},Griddly.get_data(observation))
+    observation = convert(Array{Int,3},Griddly.get_data(observation))
+    vector_obs = Griddly.vector_obs(grid)
+    vector_obs = convert(Array{Int8,3},Griddly.get_data(vector_obs))
     total_reward = 0
     for i in 1:10
-        dir = choose_action(observation,sokoagent)
+        dir = choose_action(vector_obs,sokoagent)
         println(dir)
         reward, done = Griddly.step_player!(player1,"move", [dir])
         total_reward += reward
-        observation = convert(Array{Int8,3},Griddly.get_data(Griddly.observe(game)))
-        println(observation)
+        observation = convert(Array{Int,3},Griddly.get_data(Griddly.observe(game)))
+        vector_obs = convert(Array{Int8,3},Griddly.get_data(Griddly.vector_obs(grid)))
+        println(vector_obs)
     end
 end
 
@@ -133,6 +136,6 @@ function test_one_plus_evo_agent()
     println(best.genes)
     println(length(best.genes))
 end
-@testset "OnePlus evo with a basic fitness" begin
-    test_one_plus_evo_agent()
-end
+# @testset "OnePlus evo with a basic fitness" begin
+#     test_one_plus_evo_agent()
+# end
