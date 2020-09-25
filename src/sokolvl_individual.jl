@@ -230,3 +230,47 @@ function apply_sokolvl_constraint!(sokolvl_ind::SokoLvlIndividual)
         end
     end
 end
+
+function apply_box_holes_constraint!(sokolvl_ind::SokoLvlIndividual,max_holes_box::Int64,box_idx::Int64,hole_idx::Int64)
+    # get some properties of our grid
+    width = sokolvl_ind.width
+    height = sokolvl_ind.height
+    objects_char_list = sokolvl_ind.objects_char_list
+    # step to ensure there is one and only one agent
+    nb_boxes_count = 0
+    pos_boxes = []
+    nb_holes_count = 0
+    pos_holes = []
+    for pos in 1:width*height
+        if sokolvl_ind.genes[pos + (box_idx-1)*width*height] == 1
+            nb_boxes_count += 1
+            push!(pos_boxes,pos)
+        end
+        if sokolvl_ind.genes[pos + (hole_idx-1)*width*height] == 1
+            nb_holes_count += 1
+            push!(pos_holes,pos)
+        end
+    end
+    # handle boxes
+    if nb_boxes_count > max_holes_box
+        idx_box_to_keep = randperm(nb_box_count)[1:max_holes_box]
+        pos_boxes_to_keep = pos_boxes[idx_box_to_keep]
+        for pos in pos_boxes
+            sokolvl_ind.genes[pos + (box_idx-1)*width*height] = 0
+        end
+        for pos in pos_boxes_to_keep
+            sokolvl_ind.genes[pos + (box_idx-1)*width*height] = 1
+        end
+    end
+    # handle holes
+    if nb_holes_count > max_holes_box
+        idx_hole_to_keep = randperm(nb_holes_count)[1:max_holes_box]
+        pos_holes_to_keep = pos_boxes[idx_hole_to_keep]
+        for pos in pos_holes
+            sokolvl_ind.genes[pos + (hole_idx-1)*width*height] = 0
+        end
+        for pos in pos_holes_to_keep
+            sokolvl_ind.genes[pos + (hole_idx-1)*width*height] = 1
+        end
+    end
+end
