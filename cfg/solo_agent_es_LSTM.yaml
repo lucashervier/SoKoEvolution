@@ -1,0 +1,13 @@
+width: 8
+height: 8
+nb_object: 4
+n_genes: 35549
+d_fitness: 1
+n_elite: 2
+tournament_size: 3
+p_mutation: 0.3
+p_crossover: 0
+n_population: 13
+n_gen: 4000
+log_gen: 1
+save_gen: 5
