@@ -153,3 +153,29 @@ end
 # @testset "OnePlus evo with a basic fitness" begin
 #     test_one_plus_evo_agent()
 # end
+
+@testset "Multiple Frame input" begin
+    lvl_str = """
+    wwwww
+    wh..w
+    w.b.w
+    w..Aw
+    wwwww
+    """
+    Griddly.load_level_string!(grid,lvl_str)
+    Griddly.reset!(game)
+    sokoagent = SokoAgent(model, cfg)
+    transcript_sokoagent_genes!(sokoagent)
+    old_frame = convert(Array{Int8,3},Griddly.get_data(Griddly.vector_obs(grid)))
+    new_frame = convert(Array{Int8,3},Griddly.get_data(Griddly.vector_obs(grid)))
+    total_reward = 0
+    for step in 1:40
+        observations = [new_frame,old_frame]
+        dir = choose_action(observations ,sokoagent,2)
+        println("action:$dir")
+        reward, done = Griddly.step_player!(player1,"move", [dir])
+        total_reward += reward
+        old_frame = deepcopy(new_frame)
+        new_frame = convert(Array{Int8,3},Griddly.get_data(Griddly.vector_obs(grid)))
+    end
+end

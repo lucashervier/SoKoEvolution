@@ -1,3 +1,5 @@
+import Cambrian: ind_parse
+
 "SokoLvlIndividual : Individual class using a binary string genotype"
 struct SokoLvlIndividual <: Cambrian.Individual
     genes::BitArray
@@ -38,6 +40,11 @@ end
 function SokoLvlIndividual(cfg::NamedTuple, ind::String)::SokoLvlIndividual
     dict = JSON.parse(ind)
     SokoLvlIndividual(BitArray(dict["genes"]),cfg)
+end
+
+function SokoLvlIndividual(st::String)::SokoLvlIndividual
+    dict = ind_parse(st)
+    SokoLvlIndividual(BitArray(dict["genes"]),Float64.(dict["fitness"]),dict["width"],dict["height"],dict["objects_char_list"],dict["agent_idx"])
 end
 
 function get_child(parent::SokoLvlIndividual, genes::AbstractArray)

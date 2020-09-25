@@ -1,3 +1,4 @@
+import Cambrian: ind_parse
 "SokoAgent : Individual class using a floating point genotype in [0, 1]"
 struct SokoAgent <: Cambrian.Individual
     genes::Array{Float64}
@@ -85,5 +86,20 @@ function choose_action(observation,sokoagent::SokoAgent)
     obs = Float32.(reshape(obs,(sokoagent.width,sokoagent.height,sokoagent.nb_object,1)))
 
     output = sokoagent.model(obs)
+    return argmax(output)[1]
+end
+
+"""
+    choose_action(observation,sokoagent::SokoAgent,frame_history_len::Int64)
+Apply the model to our observation and choose the action idx with the maximum value.
+"""
+function choose_action(observations,sokoagent::SokoAgent,frame_history_len::Int64)
+    input = Array{Float32}(undef, size(permutedims(observations[1],[3,2,1]))..., frame_history_len)
+    for i in eachindex(observations)
+        obs = permutedims(observations[i],[3,2,1])
+        obs = Float32.(obs)
+        input[:,:,:,i] = obs
+    end
+    output = sokoagent.model(input)
     return argmax(output)[1]
 end

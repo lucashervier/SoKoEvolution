@@ -24,7 +24,9 @@ game = Griddly.create_game(grid,Griddly.SPRITE_2D)
 player1 = Griddly.register_player!(game,"Tux", Griddly.BLOCK_2D)
 Griddly.init!(game)
 
-cfg_agent = Cambrian.get_config("cfg/solo_agent_es.yaml")
+# cfg_agent = Cambrian.get_config("cfg/solo_agent_es.yaml")
+# cfg_agent = Cambrian.get_config("cfg/solo_agent_es_LSTM.yaml")
+cfg_agent = Cambrian.get_config("cfg/solo_agent_es_RNN.yaml")
 
 agent_model = Chain(
                     Conv((3,3),4=>4,pad=(1,1),relu),
@@ -35,6 +37,26 @@ agent_model = Chain(
                     softmax
                     )
 println("nb_params:$(get_params_count(agent_model))")
+
+agent_LSTM_model = Chain(
+                    Conv((3,3),4=>4,pad=(1,1),relu),
+                    Conv((3,3),4=>1,pad=(1,1),relu),
+                    Flux.flatten,
+                    LSTM(64,64),
+                    Dense(64,32,relu),
+                    Dense(32,4),
+                    softmax
+                    )
+println("nb_params:$(get_params_count(agent_LSTM_model))")
+
+agent_RNN_model = Chain(
+                    Conv((3,3),4=>1,pad=(1,1),relu),
+                    Flux.flatten,
+                    RNN(64,64),
+                    Dense(64,4),
+                    softmax
+                    )
+println("nb_params:$(get_params_count(agent_RNN_model))")
 # Overrides of the mutate function
 mutate(i::SokoAgent) = mutate(i, cfg_agent.p_mutation)
 
@@ -126,10 +148,10 @@ function has_the_box_moved(old_observation,new_observation)::Bool
     old_box = old_observation[1,:,:]
     new_box = new_observation[1,:,:]
 
-    if sum(old_box-new_box)!=0
-        return true
+    if old_box-new_box==zeros(8,8)
+        return false
     end
-    return false
+    return true
 end
 
 function fitness_solo(agent::SokoAgent)
@@ -151,10 +173,35 @@ function fitness_solo(agent::SokoAgent)
             total_reward += 1
         end
         dir = choose_action(new_observation,agent)
-        # println("dir:$dir")
         reward, done = Griddly.step_player!(player1,"move", [dir])
         total_reward += reward*100
         old_observation = deepcopy(new_observation)
+        if done==1
+            break
+        end
+    end
+    return [total_reward]
+end
+
+function fitness_solo_several_frame(agent::SokoAgent)
+    transcript_sokoagent_genes!(agent)
+    Griddly.load_level_string!(grid,lvl_str)
+    Griddly.reset!(game)
+    total_reward = 0
+    old_observation = Griddly.vector_obs(grid)
+    old_observation = Griddly.get_data(old_observation)
+    new_observation = Griddly.vector_obs(grid)
+    new_observation = Griddly.get_data(new_observation)
+    for step in 1:200
+        if has_the_box_moved(old_observation,new_observation)
+            total_reward += 1
+        end
+        dir = choose_action([new_observation,old_observation],agent,2)
+        reward, done = Griddly.step_player!(player1,"move", [dir])
+        total_reward += reward*100
+        old_observation = deepcopy(new_observation)
+        new_observation = Griddly.vector_obs(grid)
+        new_observation = Griddly.get_data(new_observation)
         if done==1
             break
         end
@@ -218,17 +265,19 @@ function run!(e::AbstractEvolution,id::String)
         if best_agent.fitness[1]>=100
             println("Gen:$(e.gen)")
             println("Fit:$(best_agent.fitness[1])")
-            save_gen(e,"ES/solo_agent_es/bests")
+            save_gen(e,"ES/solo_agent_es_RNN_3/bests")
             break
         end
     end
 end
 
 #------------------------------------Main------------------------------------#
-agents = sNES_soko(agent_model,cfg_agent,fitness_solo;logfile=string("logs/","ES/solo_agent_es", ".csv"))
+# agents = sNES_soko(agent_model,cfg_agent,fitness_solo;logfile=string("logs/","ES/solo_agent_es_2", ".csv"))
+# agents_multiple_frame = sNES_soko(agent_model,cfg_agent,fitness_solo_several_frame;logfile=string("logs/","ES/solo_agent_es_multiple_frame_6", ".csv"))
+agents_RNN = sNES_soko(agent_RNN_model,cfg_agent,fitness_solo;logfile=string("logs/","ES/solo_agent_es_RNN_3", ".csv"))
 # render_window = RenderWindow(700,700)
 # display(render_window.scene)
-run!(agents,"ES/solo_agent_es")
+run!(agents_RNN,"ES/solo_agent_es_RNN_3")
 
-best_agent = sort(agents.population)[end]
+best_agent = sort(agents_RNN.population)[end]
 println("Final fitness agent: ", best_agent.fitness[1])
