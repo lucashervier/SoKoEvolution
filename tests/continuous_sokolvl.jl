@@ -11,6 +11,8 @@ model = Chain(
 Dense(2,16),
 Dense(16,5)
 )
+
+mutate(i::ContinuousSokoLvl) = mutate(i, cfg.m_rate)
 #----------Basic Test on our ContinuousSokoLvl and its function----------#
 @testset "ContinousSokoLvl" begin
     # from cfg with random genes
@@ -38,4 +40,6 @@ Dense(16,5)
     """
     lvl_str = write_map(ind)
     @test lvl_str == expected_str
+    new_ind = mutate(ind)
+    @test new_ind.genes != genes
 end
