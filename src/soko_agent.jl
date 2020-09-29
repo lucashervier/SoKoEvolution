@@ -59,7 +59,7 @@ end
     mutate(parent::SokoAgent, m_rate::Float64)
 
 To use, define
-    mutate(parent::SokoLvlIndividual) = mutate(parent, m_rate)
+    mutate(parent::SokoAgent) = mutate(parent, m_rate)
 """
 function mutate(parent::SokoAgent, m_rate::Float64)
     inds = rand(length(parent.genes)) .> m_rate
