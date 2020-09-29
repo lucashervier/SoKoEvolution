@@ -48,6 +48,8 @@ function video_best_gen()
         for step in 1:200
             dir = choose_action(observation,agent)
             reward, done = Griddly.step_player!(player1,"move", [dir])
+            observation = Griddly.vector_obs(grid)
+            observation = Griddly.get_data(observation)
             sprite = Griddly.observe(game)
             sprite = Griddly.get_data(sprite)
             add_frame!(video,io,sprite;speed=1/5,fast_display=true)
