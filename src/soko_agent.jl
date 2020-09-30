@@ -103,3 +103,19 @@ function choose_action(observations,sokoagent::SokoAgent,frame_history_len::Int6
     output = sokoagent.model(input)
     return argmax(output)[1]
 end
+
+function save_ind(sokoagent::SokoAgent,path)
+    f = open(path, "w+")
+    write(f,"""{"genes":""")
+    write(f, string(sokagent.genes))
+    write(f,""","fitness":""")
+    write(f, string(sokagent.fitness))
+    write(f,""","width":""")
+    write(f, string(sokagent.width))
+    write(f,""","height":""")
+    write(f, string(sokagent.height))
+    write(f,""","nb_object":""")
+    write(f, string(sokagent.nb_object))
+    write(f,"""}""")
+    close(f)
+end

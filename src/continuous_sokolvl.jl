@@ -91,7 +91,6 @@ function write_map(continuoussokolvl::ContinuousSokoLvl)
     height = continuoussokolvl.height
     # get the list of objects the level may include
     objects_char_list = continuoussokolvl.objects_char_list
-    nb_object = length(objects_char_list)
     # to know if the agent was selected
     agent_idx = continuoussokolvl.agent_idx
     agent_in_place = false
@@ -114,12 +113,7 @@ function write_map(continuoussokolvl::ContinuousSokoLvl)
                     idx_object = argmax(output)[1]
                 end
             end
-            if idx_object == 5
-                object_at_x_y = "."
-            else
-                object_at_x_y = objects_char_list[idx_object]
-            end
-
+            object_at_x_y = objects_char_list[idx_object]
             lvl_str = string(lvl_str,object_at_x_y)
         end
         lvl_str = string(lvl_str,"\n")
@@ -133,12 +127,7 @@ function from_matrix_map_to_str(matrix_map::Array{Int64,2},objects_char_list::Ar
     for y_pos in 1:height
         for x_pos in 1:width
             object_idx = matrix_map[x_pos,y_pos]
-            object_at_x_y = ""
-            if object_idx == 5
-                object_at_x_y = "."
-            else
-                object_at_x_y = objects_char_list[object_idx]
-            end
+            object_at_x_y = objects_char_list[object_idx]
             lvl_str = string(lvl_str,object_in_x_y)
         end
         lvl_str = string(lvl_str,"\n")
@@ -152,7 +141,6 @@ function write_map2(continuoussokolvl::ContinuousSokoLvl)
     height = continuoussokolvl.height
     # get the list of objects the level may include
     objects_char_list = continuoussokolvl.objects_char_list
-    nb_object = length(objects_char_list)
     # to know where to place agent
     x_agents = []
     y_agents = []
@@ -180,4 +168,22 @@ function write_map2(continuoussokolvl::ContinuousSokoLvl)
 
     matrix_map[x_agent,y_agent] = agent_idx
     lvl_str = from_matrix_map_to_str(matrix_map,objects_char_list)
+end
+
+function save_ind(continuoussokolvl::ContinuousSokoLvl,path)
+    f = open(path, "w+")
+    write(f,"""{"genes":""")
+    write(f, string(continuoussokolvl.genes))
+    write(f,""","fitness":""")
+    write(f, string(continuoussokolvl.fitness))
+    write(f,""","width":""")
+    write(f, string(continuoussokolvl.width))
+    write(f,""","height":""")
+    write(f, string(continuoussokolvl.height))
+    write(f,""","objects_char_list":""")
+    write(f, string(continuoussokolvl.objects_char_list))
+    write(f,""","agent_idx":""")
+    write(f, string(continuoussokolvl.agent_idx))
+    write(f,"""}""")
+    close(f)
 end
