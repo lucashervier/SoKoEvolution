@@ -1,7 +1,7 @@
 Version: "0.1"
 Environment:
-  Name: Sokoban - 2
-  Description: Push the boxes onto the marked spaces, once a box has moved onto a space, it cannot be moved
+  Name: Sokoban - 3
+  Description: Push the boxes onto the marked spaces
   Observers:
     Sprite2D:
       TileSize: 24
@@ -91,11 +91,19 @@ Actions:
 
       # If a box is moved into a hole, it should change to in-place box
       - Src:
-          Object: [box, box_in_place]
+          Object: box
           Commands:
             - mov: _dest
             - change_to: box_in_place
             - reward: 1
+        Dst:
+          Object: hole
+
+      - Src:
+          Object: box_in_place
+          Commands:
+            - mov: _dest
+            - change_to: box_in_place
         Dst:
           Object: hole
 
@@ -105,6 +113,7 @@ Actions:
           Commands:
             - mov: _dest
             - change_to: box
+            - reward: -1
         Dst:
           Object: _empty
 
