@@ -1,7 +1,7 @@
 Version: "0.1"
 Environment:
-  Name: Sokoban
-  Description: Push the boxes into holes.
+  Name: Sokoban - 2
+  Description: Push the boxes onto the marked spaces, once a box has moved onto a space, it cannot be moved
   Observers:
     Sprite2D:
       TileSize: 24
@@ -13,62 +13,50 @@ Environment:
       - eq: [box:count, 0] # If there are no boxes left
   Levels:
     - |
-      wwwwwwwwwwwww
-      whhhhhhhhhhhw
-      wh.........hw
-      wh...b.b...hw
-      wh....A....hw
-      wh...b.b...hw
-      wh.........hw
-      whhhhhhhhhhhw
-      wwwwwwwwwwwww
+      wwwwwwww
+      ww.....w
+      ww.hbh.w
+      ww.bAb.w
+      w..hbh.w
+      w......w
+      wwwwwwww
     - |
-      wwwwwwwwwwwww
-      w........w..w
-      w...b.......w
-      w...A.b.w.hww
-      www.wb..wwwww
-      w.......w.h.w
-      w.b........ww
-      w..........ww
-      wwwwwwwwwwwww
-    - |
-      wwwwwwwwwwwww
-      wwA........ww
-      wwwwb......ww
-      wwww.h......w
-      wwww........w
-      w..b...wbwwww
-      w..h.......hw
-      w...........w
-      wwwwwwwwwwwww
-    - |
-      wwwwwwwwwww
-      w...w.....w
-      w.whb.ww.bw
-      w...b.....w
-      wwwwwh....w
-      ww........w
-      ww..w..w.Aw
-      ww..w..w.bw
-      wwwwwwwwwww
+      wwwwwwwwwwww
+      w....www...w
+      w.bb.....wAw
+      w.b.whhh...w
+      w...wwwwwwww
+      wwwwwwwwwwww
     - |
       wwwwwww
-      w..hA.w
-      w.whw.w
-      w...b.w
-      whbb.ww
-      w..wwww
+      w.....w
+      w.hbh.w
+      w.bhb.w
+      w.hbh.w
+      w.bhb.w
+      w..A..w
       wwwwwww
     - |
-      wwwwwwwww
-      ww.h....w
-      ww...bA.w
-      w....w..w
-      wwwbw...w
-      www...w.w
-      wwwh....w
-      wwwwwwwww
+      wwwwww
+      wh..ww
+      wAbb.w
+      ww...w
+      www..w
+      wwwwhw
+      wwwwww
+    - |
+      wwwwwwww
+      www.hhAw
+      www.bb.w
+      wwww.www
+      wwww.www
+      wwww.www
+      wwww.www
+      w....www
+      w.w...ww
+      w...w.ww
+      www...ww
+      wwwwwwww
 
 Actions:
   # Define the move action
@@ -96,18 +84,29 @@ Actions:
           Commands:
             - mov: _dest
         Dst:
-          Object: box
+          Object: [box, box_in_place]
           Commands:
-            - cascade: _dest
+            - exec: 
+                Action: move
 
-      # If a box is moved into a hole remove it
+      # If a box is moved into a hole, it should change to in-place box
       - Src:
-          Object: box
+          Object: [box, box_in_place]
           Commands:
-            - remove: true
+            - mov: _dest
+            - change_to: box_in_place
             - reward: 1
         Dst:
           Object: hole
+      
+      # If in-place box is moved into empty space, it should be an empty box
+      - Src:
+          Object: box_in_place
+          Commands:
+            - mov: _dest
+            - change_to: box
+        Dst:
+          Object: _empty
 
 Objects:
   - Name: box
@@ -115,10 +114,21 @@ Objects:
     MapCharacter: b
     Observers:
       Sprite2D:
-        - Image: gvgai/newset/block1.png
+        - Image: gvgai/newset/block2.png
       Block2D:
         - Shape: square
           Color: [1.0, 0.0, 0.0]
+          Scale: 0.5
+
+  - Name: box_in_place
+    Z: 2
+    MapCharacter: f
+    Observers:
+      Sprite2D:
+        - Image: gvgai/newset/block1.png
+      Block2D:
+        - Shape: square
+          Color: [0.0, 1.0, 0.0]
           Scale: 0.5
 
   - Name: wall
@@ -155,7 +165,7 @@ Objects:
       Sprite2D:
         - Image: gvgai/oryx/cspell4.png
       Block2D:
-        - Shape: square
+        - Shape: triangle
           Color: [0.0, 1.0, 0.0]
           Scale: 0.6
 
