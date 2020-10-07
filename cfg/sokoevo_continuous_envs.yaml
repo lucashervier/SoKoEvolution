@@ -1,0 +1,14 @@
+width: 8
+height: 8
+objects_char_list: ["b","w","h","A","."]
+agent_idx: 4
+d_fitness: 1
+n_elite: 2
+n_genes: 1205
+tournament_size: 3
+p_mutation: 0.3
+p_crossover: 0.2
+n_parents: 2
+n_gen: 3000
+log_gen: 10
+save_gen: 10
