@@ -14,7 +14,6 @@ import EvolutionaryStrategies: snes_populate, snes_generation
 include("../src/sokolvl_individual.jl")
 include("../src/utils.jl")
 include("../src/soko_agent.jl")
-
 #-----------------------------Configuration-----------------------------#
 image_path = joinpath(@__DIR__,"..","resources","images")
 shader_path = joinpath(@__DIR__,"..","resources","shaders")
@@ -144,14 +143,29 @@ end
 
 "Call step!(e1,e2) e1.config.n_gen times consecutively"
 function run!(e1::AbstractEvolution,e2::AbstractEvolution)
+    overall_best_agent = -1
+    overall_best_env = -1
     for i in tqdm((e1.gen+1):e1.config.n_gen)
         step!(e1,e2)
         best_agent = sort(e2.population)[end]
-        if best_agent.fitness[1]>overall_best_fitness
-            println("Gen:$(e1.gen)")
+        best_env = sort(e1.population)[end]
+
+        if best_agent.fitness[1]>overall_best_agent
+            println("Gen:$(e1.gen)")s
             println("Fit_agent:$(best_agent.fitness[1])")
-            overall_best_fitness = best_agent.fitness[1]
-            save_gen(e1,e2;id1="best/envs",id2="best/agents")
+            overall_best_agent = best_agent.fitness[1]
+            if e1.gen%e1.config.save_gen != 0
+                save_gen(e1,e2;id1="best/envs",id2="best/agents")
+            end
+        end
+
+        if best_env.fitness[1]>overall_best_env
+            println("Gen:$(e1.gen)")s
+            println("Fit_agent:$(best_agent.fitness[1])")
+            overall_best_env = best_env.fitness[1]
+            if (e1.gen%e1.config.save_gen != 0) && (best_agent.fitness[1]!=overall_best_agent)
+                save_gen(e1,e2;id1="best/envs",id2="best/agents")
+            end
         end
     end
 end
