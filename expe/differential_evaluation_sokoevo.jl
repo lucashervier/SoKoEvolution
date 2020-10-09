@@ -101,7 +101,7 @@ end
 # overrides evaluate function
 function evaluate(e1::AbstractEvolution, e2::AbstractEvolution)
     local_eval = get_local_evaluation(e1,e2)
-    path = "localfit/differential_evaluation_sokoevo"
+    path = "localfit/differential_evaluation_sokoevo_4"
     mkpath(path)
     CSV.write(Formatting.format("$path/gen-{1:04d}",e1.gen),  DataFrame(local_eval), header=false)
     for i in eachindex(e1.population)
@@ -114,14 +114,14 @@ end
 
 # overrides save_gen for 2 evolution
 function save_gen(e1::AbstractEvolution,e2::AbstractEvolution;id1="envs",id2="agents")
-    path1 = Formatting.format("gens/differential_evaluation_sokoevo/{1}/{2:04d}",id1, e1.gen)
+    path1 = Formatting.format("gens/differential_evaluation_sokoevo_4/{1}/{2:04d}",id1, e1.gen)
     mkpath(path1)
     sort!(e1.population)
     for i in eachindex(e1.population)
         path_ind = Formatting.format("{1}/{2:04d}.dna", path1, i)
         save_ind(e1.population[i],path_ind)
     end
-    path2 = Formatting.format("gens/differential_evaluation_sokoevo/{1}/{2:04d}",id2, e2.gen)
+    path2 = Formatting.format("gens/differential_evaluation_sokoevo_4/{1}/{2:04d}",id2, e2.gen)
     mkpath(path2)
     sort!(e2.population)
     for i in eachindex(e2.population)
@@ -156,22 +156,36 @@ end
 
 "Call step!(e1,e2) e1.config.n_gen times consecutively"
 function run!(e1::AbstractEvolution,e2::AbstractEvolution)
-    overall_best_fitness = -1
+    overall_best_agent = -1
+    overall_best_env = -1
     for i in tqdm((e1.gen+1):e1.config.n_gen)
         step!(e1,e2)
         best_agent = sort(e2.population)[end]
-        if best_agent.fitness[1]>overall_best_fitness
+        best_env = sort(e1.population)[end]
+
+        if best_agent.fitness[1]>overall_best_agent
             println("Gen:$(e1.gen)")
             println("Fit_agent:$(best_agent.fitness[1])")
-            overall_best_fitness = best_agent.fitness[1]
-            save_gen(e1,e2;id1="best/envs",id2="best/agents")
+            overall_best_agent = best_agent.fitness[1]
+            if e1.gen%e1.config.save_gen != 0
+                save_gen(e1,e2;id1="best/envs",id2="best/agents")
+            end
+        end
+
+        if best_env.fitness[1]>overall_best_env
+            println("Gen:$(e1.gen)")
+            println("Fit_agent:$(best_agent.fitness[1])")
+            overall_best_env = best_env.fitness[1]
+            if (e1.gen%e1.config.save_gen != 0) && (best_agent.fitness[1]!=overall_best_agent)
+                save_gen(e1,e2;id1="best/envs",id2="best/agents")
+            end
         end
     end
 end
 
 #------------------------------------Main------------------------------------#
-envs = sNES{ContinuousSokoLvl}(envs_model,cfg_envs,fitness_env;logfile=string("logs/","differential_evaluation_sokoevo/envs", ".csv"))
-agents = sNES{SokoAgent}(agent_model,cfg_agent,fitness_agent;logfile=string("logs/","differential_evaluation_sokoevo/agents", ".csv"))
+envs = sNES{ContinuousSokoLvl}(envs_model,cfg_envs,fitness_env;logfile=string("logs/","differential_evaluation_sokoevo_4/envs", ".csv"))
+agents = sNES{SokoAgent}(agent_model,cfg_agent,fitness_agent;logfile=string("logs/","differential_evaluation_sokoevo_4/agents", ".csv"))
 
 run!(envs,agents)
 
