@@ -282,6 +282,6 @@ end
 
 function save_ind(sokolvl::SokoLvlIndividual,path)
     f = open(path, "w+")
-    write(f, string(e1.population[i]))
+    write(f, string(sokolvl))
     close(f)
 end
