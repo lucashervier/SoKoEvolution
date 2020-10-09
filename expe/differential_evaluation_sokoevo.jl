@@ -23,7 +23,7 @@ gdy_reader = Griddly.GDYReader(image_path,shader_path)
 
 grid = Griddly.load!(gdy_reader,joinpath(gdy_path,"Single-Player/GVGAI/sokoban3.yaml"))
 game = Griddly.create_game(grid,Griddly.VECTOR)
-player1 = Griddly.register_player!(game,"Tux", Griddly.BLOCK_2D)
+player1 = Griddly.register_player!(game,"Tux", Griddly.VECTOR)
 Griddly.init!(game)
 
 cfg_envs = Cambrian.get_config("cfg/sokoevo_continuous_envs.yaml")
@@ -103,7 +103,7 @@ function evaluate(e1::AbstractEvolution, e2::AbstractEvolution)
     local_eval = get_local_evaluation(e1,e2)
     path = "localfit/differential_evaluation_sokoevo"
     mkpath(path)
-    CSV.write("$path/gen-$(e1.gen).csv",  DataFrame(local_eval), header=false)
+    CSV.write(Formatting.format("$path/gen-{1:04d}",e1.gen),  DataFrame(local_eval), header=false)
     for i in eachindex(e1.population)
         e1.population[i].fitness[:] = e1.fitness(i,local_eval)
     end
@@ -112,18 +112,6 @@ function evaluate(e1::AbstractEvolution, e2::AbstractEvolution)
     end
 end
 
-function evaluate(e1::AbstractEvolution, e2::AbstractEvolution)
-    local_eval = get_local_evaluation(e1,e2)
-    path = "localfit/differential_evaluation_sokoevo"
-    mkpath(path)
-    CSV.write("$path/gen-$(e1.gen).csv",  DataFrame(local_eval), header=false)
-    for i in eachindex(e1.population)
-        e1.population[i].fitness[:] = e1.fitness(i,local_eval)
-    end
-    for i in eachindex(e2.population)
-        e2.population[i].fitness[:] = e2.fitness(i,local_eval)
-    end
-end
 # overrides save_gen for 2 evolution
 function save_gen(e1::AbstractEvolution,e2::AbstractEvolution;id1="envs",id2="agents")
     path1 = Formatting.format("gens/differential_evaluation_sokoevo/{1}/{2:04d}",id1, e1.gen)
@@ -147,7 +135,7 @@ function step!(e1::AbstractEvolution,e2::AbstractEvolution)
     e1.gen += 1
     e2.gen += 1
     # we change our environments only every 10 gen
-    if e1.gen > 1 && e1.gen%10==0
+    if e1.gen > 1 && e1.gen%e1.config.life_env==0
         populate(e1)
         populate(e2)
     elseif e1.gen > 1
