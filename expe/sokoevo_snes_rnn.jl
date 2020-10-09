@@ -21,16 +21,16 @@ shader_path = joinpath(@__DIR__,"..","resources","shaders")
 gdy_path = joinpath(@__DIR__,"..","resources","games")
 gdy_reader = Griddly.GDYReader(image_path,shader_path)
 
-grid = Griddly.load!(gdy_reader,joinpath(gdy_path,"Single-Player/GVGAI/sokoban.yaml"))
+grid = Griddly.load!(gdy_reader,joinpath(gdy_path,"Single-Player/GVGAI/sokoban3.yaml"))
 game = Griddly.create_game(grid,Griddly.VECTOR)
-player1 = Griddly.register_player!(game,"Tux", Griddly.BLOCK_2D)
+player1 = Griddly.register_player!(game,"Tux", Griddly.VECTOR)
 Griddly.init!(game)
 
 cfg_envs = Cambrian.get_config("cfg/sokoevo_envs.yaml")
-cfg_agent = Cambrian.get_config("cfg/sokoevo_RNNagents.yaml")
+cfg_agent = Cambrian.get_config("cfg/sokoevo_continuous_agents.yaml")
 
 agent_model = Chain(
-                    Conv((3,3),4=>1,pad=(1,1),relu),
+                    Conv((3,3),5=>1,pad=(1,1),relu),
                     Flux.flatten,
                     RNN(64,64),
                     Dense(64,4),
@@ -44,77 +44,8 @@ mutate(i::SokoLvlIndividual) = mutate(i, cfg_envs.p_mutation)
 
 selection(pop::Array{<:Individual}) = Cambrian.tournament_selection(pop, cfg_envs.tournament_size)
 #-----------------------------sNES Helpers-----------------------------#
-# For agents
-mutable struct sNES_soko <: Cambrian.AbstractEvolution
-    config::NamedTuple
-    logger::CambrianLogger
-    population::Array{SokoAgent}
-    elites::Array{SokoAgent}
-    state::EvolutionaryStrategies.sNESState
-    fitness::Function
-    gen::Int
-end
-
-function snes_init(model, cfg::NamedTuple, state::EvolutionaryStrategies.ESState)
-    population = Array{SokoAgent}(undef, cfg.n_population)
-    for i in 1:cfg.n_population
-        genes = state.μ .+ state.σ .* view(state.s, :, i)
-        population[i] = SokoAgent(genes,model,cfg)
-    end
-    population
-end
-
-function sNES_soko(model, cfg::NamedTuple, fitness::Function, state::EvolutionaryStrategies.sNESState; logfile=string("logs/", cfg.id, ".csv"))
-    logger = CambrianLogger(logfile)
-    population = snes_init(model, cfg, state)
-    elites = deepcopy([population[i] for i in 1:cfg.n_elite])
-    sNES_soko(cfg, logger, population, elites, state, fitness, 0)
-end
-
-function sNES_soko(model, cfg::NamedTuple, fitness::Function; logfile=string("logs/", cfg.id, ".csv"))
-    logger = CambrianLogger(logfile)
-    cfg = merge(EvolutionaryStrategies.snes_config(cfg.n_genes), cfg)
-    state = EvolutionaryStrategies.sNESState(cfg.n_genes, cfg.n_population)
-    sNES_soko(model, cfg, fitness, state; logfile=logfile)
-end
-
-function snes_populate(e::sNES_soko)
-    for i in eachindex(e.population)
-        e.population[i].genes .= e.state.μ .+ e.state.σ .* view(e.state.s, :, i)
-        e.population[i].fitness .= -Inf
-    end
-end
-
-"update NES state, called after populate and evaluate"
-function snes_generation(e::sNES_soko)
-    d = e.config.n_genes
-    n = e.config.n_population
-
-    # copy population information
-    F = zeros(n)
-    for i in eachindex(e.population)
-        F[i] = -e.population[i].fitness[1]
-    end
-    idx = sortperm(F)
-
-    # compute gradients
-    ∇μ = zeros(d)
-    ∇σ = zeros(d)
-    for i in 1:n
-        j = idx[i]
-        ∇μ .+= e.state.u[i] .* e.state.s[:, j]
-        ∇σ .+= e.state.u[i] .* (e.state.s[:, j].^2 .- 1.0)
-    end
-
-    # update state variables
-    e.state.μ .+= e.config.ημ .* e.state.σ .* ∇μ
-    e.state.σ .*= exp.(e.config.ησ/2 .* ∇σ)
-    randn!(e.state.s)
-    Cambrian.elites_generation(e)
-end
-
-populate(e::sNES_soko) = snes_populate(e)
-generation(e::sNES_soko) = snes_generation(e)
+populate(e::sNES{SokoAgent}) = snes_populate(e)
+generation(e::sNES{SokoAgent}) = snes_generation(e)
 
 # Helpers for the evaluate function
 function play_env(env::SokoLvlIndividual,agent::SokoAgent;nb_step = 200)
@@ -124,7 +55,7 @@ function play_env(env::SokoLvlIndividual,agent::SokoAgent;nb_step = 200)
     Griddly.reset!(game)
     total_reward = 0
     for step in 1:nb_step
-        observation = convert(Array{Int8,3},Griddly.get_data(Griddly.observe(game)))
+        observation = convert(Array{Int,3},Griddly.get_data(Griddly.observe(game)))
         dir = choose_action(observation,agent)
         reward, done = Griddly.step_player!(player1,"move", [dir])
         total_reward += reward
@@ -135,7 +66,7 @@ function play_env(env::SokoLvlIndividual,agent::SokoAgent;nb_step = 200)
     return total_reward
 end
 
-function get_local_evaluation(envs::GAEvo{SokoLvlIndividual},agents::sNES_soko)
+function get_local_evaluation(envs::GAEvo{SokoLvlIndividual},agents::sNES{SokoAgent})
     envs_size = length(envs.population)
     agents_size = length(agents.population)
     local_eval = zeros(envs_size,agents_size)
@@ -158,46 +89,32 @@ end
 # overrides evaluate function
 function evaluate(e1::AbstractEvolution, e2::AbstractEvolution)
     local_eval = get_local_evaluation(e1,e2)
-    path = "localfit/sokoevo_rnn_agents"
+    path = "localfit/sokoevo_rnnagents_directenv_sokoban3"
     mkpath(path)
-    CSV.write("$path/gen-$(e1.gen).csv",  DataFrame(local_eval), header=false)
+    CSV.write(Formatting.format("$path/gen-{1:04d}",e1.gen),  DataFrame(local_eval), header=false)
     for i in eachindex(e1.population)
         e1.population[i].fitness[:] = e1.fitness(i,local_eval)
     end
-
     for i in eachindex(e2.population)
         e2.population[i].fitness[:] = e2.fitness(i,local_eval)
     end
-
 end
 
 # overrides save_gen for 2 evolution
 function save_gen(e1::AbstractEvolution,e2::AbstractEvolution;id1="envs",id2="agents")
-    path1 = Formatting.format("gens/sokoevo_rnn_agents/{1}/{2:04d}",id1, e1.gen)
+    path1 = Formatting.format("gens/sokoevo_rnnagents_directenv_sokoban3/{1}/{2:04d}",id1, e1.gen)
     mkpath(path1)
     sort!(e1.population)
     for i in eachindex(e1.population)
-        f = open(Formatting.format("{1}/{2:04d}.dna", path1, i), "w+")
-        write(f, string(e1.population[i]))
-        close(f)
+        path_ind = Formatting.format("{1}/{2:04d}.dna", path1, i)
+        save_ind(e1.population[i],path_ind)
     end
-    path2 = Formatting.format("gens/sokoevo_rnn_agents/{1}/{2:04d}",id2, e2.gen)
+    path2 = Formatting.format("gens/sokoevo_rnnagents_directenv_sokoban3/{1}/{2:04d}",id2, e2.gen)
     mkpath(path2)
     sort!(e2.population)
     for i in eachindex(e2.population)
-        f = open(Formatting.format("{1}/{2:04d}.dna", path2, i), "w+")
-        write(f,"""{"genes":""")
-        write(f, string(e2.population[i].genes))
-        write(f,""","fitness":""")
-        write(f, string(e2.population[i].fitness))
-        write(f,""","width":""")
-        write(f, string(e2.population[i].width))
-        write(f,""","height":""")
-        write(f, string(e2.population[i].height))
-        write(f,""","nb_object":""")
-        write(f, string(e2.population[i].nb_object))
-        write(f,"""}""")
-        close(f)
+        path_ind = Formatting.format("{1}/{2:04d}.dna", path2, i)
+        save_ind(e2.population[i],path_ind)
     end
 end
 
@@ -230,24 +147,18 @@ function run!(e1::AbstractEvolution,e2::AbstractEvolution)
     for i in tqdm((e1.gen+1):e1.config.n_gen)
         step!(e1,e2)
         best_agent = sort(e2.population)[end]
-        best_env  = sort(e1.population)[end]
-        if best_agent.fitness[1]>=15
+        if best_agent.fitness[1]>overall_best_fitness
             println("Gen:$(e1.gen)")
             println("Fit_agent:$(best_agent.fitness[1])")
-            println("Fit_env:$(best_env.fitness[1])")
-            save_gen(e1,e2;id1="envs/bests",id2="agents/bests")
-        elseif best_env.fitness[1]>=10
-            println("Gen:$(e1.gen)")
-            println("Fit_agent:$(best_agent.fitness[1])")
-            println("Fit_env:$(best_env.fitness[1])")
-            save_gen(e1,e2;id1="envs/bests",id2="agents/bests")
+            overall_best_fitness = best_agent.fitness[1]
+            save_gen(e1,e2;id1="best/envs",id2="best/agents")
         end
     end
 end
 
 #------------------------------------Main------------------------------------#
-envs = GAEvo{SokoLvlIndividual}(cfg_envs,fitness_env;logfile=string("logs/","sokoevo/envs", ".csv"))
-agents = sNES_soko(agent_model,cfg_agent,fitness_agent;logfile=string("logs/","sokoevo/agents", ".csv"))
+envs = GAEvo{SokoLvlIndividual}(cfg_envs,fitness_env;logfile=string("logs/","sokoevo_rnnagents_directenv_sokoban3/envs", ".csv"))
+agents = sNES_soko(agent_model,cfg_agent,fitness_agent;logfile=string("logs/","sokoevo_rnnagents_directenv_sokoban3/agents", ".csv"))
 
 run!(envs,agents)
 

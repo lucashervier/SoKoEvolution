@@ -279,3 +279,9 @@ function apply_box_holes_constraint!(sokolvl_ind::SokoLvlIndividual,max_holes_bo
         end
     end
 end
+
+function save_ind(sokolvl::SokoLvlIndividual,path)
+    f = open(path, "w+")
+    write(f, string(e1.population[i]))
+    close(f)
+end

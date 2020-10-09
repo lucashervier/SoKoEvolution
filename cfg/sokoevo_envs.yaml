@@ -10,6 +10,6 @@ p_mutation: 0.3
 p_crossover: 0.3
 n_parents: 2
 n_population: 13
-n_gen: 500
+n_gen: 9000
 log_gen: 1
 save_gen: 5
