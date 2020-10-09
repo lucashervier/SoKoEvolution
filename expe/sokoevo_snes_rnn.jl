@@ -172,7 +172,7 @@ end
 
 #------------------------------------Main------------------------------------#
 envs = GAEvo{SokoLvlIndividual}(cfg_envs,fitness_env;logfile=string("logs/","sokoevo_rnnagents_directenv_sokoban3/envs", ".csv"))
-agents = sNES_soko(agent_model,cfg_agent,fitness_agent;logfile=string("logs/","sokoevo_rnnagents_directenv_sokoban3/agents", ".csv"))
+agents = sNES{SokoAgent}(agent_model,cfg_agent,fitness_agent;logfile=string("logs/","sokoevo_rnnagents_directenv_sokoban3/agents", ".csv"))
 
 run!(envs,agents)
 
