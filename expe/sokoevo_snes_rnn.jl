@@ -151,7 +151,7 @@ function run!(e1::AbstractEvolution,e2::AbstractEvolution)
         best_env = sort(e1.population)[end]
 
         if best_agent.fitness[1]>overall_best_agent
-            println("Gen:$(e1.gen)")s
+            println("Gen:$(e1.gen)")
             println("Fit_agent:$(best_agent.fitness[1])")
             overall_best_agent = best_agent.fitness[1]
             if e1.gen%e1.config.save_gen != 0
