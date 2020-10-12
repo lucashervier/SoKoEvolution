@@ -8,6 +8,5 @@ tournament_size: 3
 p_mutation: 0.3
 p_crossover: 0
 n_gen: 9000
-n_population: 13
 log_gen: 1
 save_gen: 10
