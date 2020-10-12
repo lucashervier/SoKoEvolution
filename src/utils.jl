@@ -147,6 +147,9 @@ function replay(agent,lvl_str::String;render=false)
             sprites = Griddly.observe(game)
             sprites = Griddly.get_data(sprites)
             render(render_window,sprites;nice_render=false)
+            if done==1
+                break
+            end
         end
     else
         observation = Griddly.vector_obs(grid)
@@ -158,6 +161,9 @@ function replay(agent,lvl_str::String;render=false)
             observation = Griddly.vector_obs(grid)
             observation = Griddly.get_data(observation)
             total_reward += reward
+            if done==1
+                break
+            end
         end
     end
     return total_reward
