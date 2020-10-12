@@ -134,57 +134,6 @@ function write_map!(continuoussokolvl::ContinuousSokoLvl)
     return lvl_str
 end
 
-# function from_matrix_map_to_str(matrix_map::Array{Int64,2},objects_char_list::Array{String})
-#     width, height = size(matrix_map)
-#     lvl_str = """"""
-#     for y_pos in 1:height
-#         for x_pos in 1:width
-#             object_idx = matrix_map[x_pos,y_pos]
-#             object_at_x_y = objects_char_list[object_idx]
-#             lvl_str = string(lvl_str,object_in_x_y)
-#         end
-#         lvl_str = string(lvl_str,"\n")
-#     end
-#     return  lvl_str
-# end
-#
-# function write_map2(continuoussokolvl::ContinuousSokoLvl)
-#     # first get the size of the level
-#     width = continuoussokolvl.width
-#     height = continuoussokolvl.height
-#     # get the list of objects the level may include
-#     objects_char_list = continuoussokolvl.objects_char_list
-#     # to know where to place agent
-#     x_agents = []
-#     y_agents = []
-#
-#     matrix_map = zeros(Int,continuoussokolvl.width,continuoussokolvl.height)
-#
-#     for y_pos in 1:height
-#         for x_pos in 1:width
-#             input = [x_pos,y_pos]
-#             # our model got 5 output: box,wall,holes,agent and floor
-#             object_at_x_y = 0
-#             output = continuoussokolvl.model(input)
-#             idx_object = argmax(output)[1]
-#             if idx_object == agent_idx
-#                 push!(x_agents,x_pos)
-#                 push!(y_agents,x_pos)
-#                 matrix_map[x_pos,y_pos] = 5
-#             else
-#                 matrix_map[x_pos,y_pos] = output
-#             end
-#         end
-#     end
-#     x_agent = round(mean(x_agents))
-#     y_agent = round(mean(y_agents))
-#
-#     matrix_map[x_agent,y_agent] = agent_idx
-#     lvl_str = from_matrix_map_to_str(matrix_map,objects_char_list)
-#     continuoussokolvl.output_map = lvl_str
-#     return lvl_str
-# end
-
 function save_ind(continuoussokolvl::ContinuousSokoLvl,path)
     f = open(path, "w+")
     write(f,"""{"genes":""")
