@@ -62,7 +62,7 @@ fitness_std_agents = agent_mat_logs[:,7]
 title_plot = "Fitness of a CoEvolution between Sokoban level and Sokoban players"
 function plot_results(title_plot,gen_start,gen_step,gen_end,figure_saving_path)
     xs = [i for i in gen_start:gen_step:gen_end]
-    plot(xs,background=:lightgray,xaxis="Generation number",yaxis="Fitness",title=title_plot,fitness_mean_envs[Int(gen_start/gen_step):Int(gen_end/gen_step)],ribbon=fitness_std_envs[Int(gen_start/gen_step):Int(gen_end/gen_step)],fillalpha=.5,label="Envs fitness");
+    plot(xs,fitness_mean_envs[Int(gen_start/gen_step):Int(gen_end/gen_step)],ribbon=fitness_std_envs[Int(gen_start/gen_step):Int(gen_end/gen_step)],fillalpha=.5,label="Envs fitness",background=:lightgray,xaxis="Generation number",yaxis="Fitness",title=title_plot, size=(700,700));
     plot!(xs,fitness_mean_agents[Int(gen_start/gen_step):Int(gen_end/gen_step)],ribbon=fitness_std_agents[Int(gen_start/gen_step):Int(gen_end/gen_step)],fillalpha=.5,label="Agents fitness");
     savefig(figure_saving_path)
 end
