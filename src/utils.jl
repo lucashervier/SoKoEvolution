@@ -121,7 +121,7 @@ end
 
 # function to replay one agent on one lvl_str, you have to configure Griddly
 # first
-function replay(agent::SokoAgent,lvl_str::String;render=false)
+function replay(agent,lvl_str::String;render=false)
     transcript_sokoagent_genes!(agent)
 
     Griddly.load_level_string!(grid,lvl_str)
@@ -165,7 +165,7 @@ end
 
 # function to replay one agent on all level in envs_path being SokoLvlIndividual
 # you have to configure Griddly first
-function replay_sokolvl(agent::SokoAgent,envs_path;render=false)
+function replay_sokolvl(agent,envs_path;render=false)
     rewards = []
     individualLvlNameList = readdir(envs_path)
     for i in eachindex(individualLvlNameList)
@@ -181,7 +181,7 @@ end
 
 # function to replay one agent on all level in envs_path being ContinuousSokoLvl
 # you have to configure Griddly first
-function replay_continuoussokolvl(agent::SokoAgent,envs_path,env_model;render=false)
+function replay_continuoussokolvl(agent,envs_path,env_model;render=false)
     rewards = []
     individualLvlNameList = readdir(envs_path)
     for i in eachindex(individualLvlNameList)
