@@ -27,10 +27,10 @@ Griddly.init!(game)
 
 agent_path = "../results/gens/sokoevo_rnnagents_directenv_sokoban3/best/agents/7978/0013.dna"
 agent_model = Chain(
-                    Conv((3,3),4=>1,pad=(1,1),relu),
+                    Conv((3,3),5=>1,pad=(1,1),relu),
                     Flux.flatten,
-                    RNN(144,144),
-                    Dense(144,4),
+                    RNN(64,64),
+                    Dense(64,4),
                     softmax
                     )
 agent_str = read(agent_path,String)
