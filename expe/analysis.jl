@@ -7,7 +7,7 @@ using Griddly
 include("../src/sokolvl_individual.jl")
 include("../src/utils.jl")
 include("../src/soko_agent.jl")
-include("../src/continuous_sokolvl")
+include("../src/continuous_sokolvl.jl")
 #-------------------------------Expe Configuration-----------------------------#
 agent_logs_path = "..//results//logs//sokoevo_rnnagents_directenv_sokoban3//agents.csv"
 env_logs_path = "..//results//logs//sokoevo_rnnagents_directenv_sokoban3//envs.csv"
