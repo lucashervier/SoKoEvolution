@@ -121,14 +121,14 @@ end
 
 # function to replay one agent on one lvl_str, you have to configure Griddly
 # first
-function replay(agent,lvl_str::String;render=false)
+function replay(agent,lvl_str::String;rendering=false)
     transcript_sokoagent_genes!(agent)
 
     Griddly.load_level_string!(grid,lvl_str)
     Griddly.reset!(game)
     total_reward = 0
 
-    if render
+    if rendering
         render_window = RenderWindow(700,700)
 
         observation = Griddly.vector_obs(grid)
@@ -136,7 +136,7 @@ function replay(agent,lvl_str::String;render=false)
 
         sprites = Griddly.observe(game)
         sprites = Griddly.get_data(sprites)
-        render(render_window,sprites;nice_render=false)
+        render(render_window,sprites;nice_render=true)
 
         for step in 1:200
             dir = choose_action(observation,agent)
@@ -171,7 +171,7 @@ end
 
 # function to replay one agent on all level in envs_path being SokoLvlIndividual
 # you have to configure Griddly first
-function replay_sokolvl(agent,envs_path;render=false)
+function replay_sokolvl(agent,envs_path;rendering=false)
     rewards = []
     individualLvlNameList = readdir(envs_path)
     for i in eachindex(individualLvlNameList)
@@ -179,7 +179,7 @@ function replay_sokolvl(agent,envs_path;render=false)
         lvl = SokoLvlIndividual(env_str)
         lvl_str = transcript_sokolvl_genes(lvl)
 
-        reward = replay(agent,lvl_str;render=render)
+        reward = replay(agent,lvl_str;rendering=rendering)
         push!(rewards,reward)
     end
     return rewards
@@ -187,7 +187,7 @@ end
 
 # function to replay one agent on all level in envs_path being ContinuousSokoLvl
 # you have to configure Griddly first
-function replay_continuoussokolvl(agent,envs_path,env_model;render=false)
+function replay_continuoussokolvl(agent,envs_path,env_model;rendering=false)
     rewards = []
     individualLvlNameList = readdir(envs_path)
     for i in eachindex(individualLvlNameList)
@@ -195,7 +195,7 @@ function replay_continuoussokolvl(agent,envs_path,env_model;render=false)
         lvl = ContinuousSokoLvl(env_str,env_model)
         lvl_str = lvl.output_map
 
-        reward = replay(agent,lvl_str;render=render)
+        reward = replay(agent,lvl_str;rendering=rendering)
         push!(rewards,reward)
     end
     return rewards
@@ -203,21 +203,21 @@ end
 
 # function to replay all agents in agents_path on all level in envs_path being
 # SokoLvlIndividual, you have to configure Griddly first
-function replay_sokolvl(agents_path::String,agent_model,envs_path::String;render=false)
+function replay_sokolvl(agents_path::String,agent_model,envs_path::String;rendering=false)
     agentNameList = readdir(agents_path)
     individualLvlNameList = readdir(envs_path)
     rewards = zeros(length(agentNameList), length(individualLvlNameList))
     for i in eachindex(agentNameList)
         agent_str = read("$agents_path/$(agentNameList[i])", String)
         agent = SokoAgent(agent_str,agent_model)
-        rewards[:,i] = replay_sokolvl(agent,envs_path;render=render)
+        rewards[:,i] = replay_sokolvl(agent,envs_path;rendering=rendering)
     end
     return rewards
 end
 
 # function to replay all agents in agents_path on all level in envs_path being
 # ContinuousSokoLvl, you have to configure Griddly first
-function replay_continuoussokolvl(agents_path::String,agent_model,envs_path::String,env_model;render=false)
+function replay_continuoussokolvl(agents_path::String,agent_model,envs_path::String,env_model;rendering=false)
     agentNameList = readdir(agents_path)
     individualLvlNameList = readdir(envs_path)
     rewards = zeros(length(agentNameList), length(individualLvlNameList))
