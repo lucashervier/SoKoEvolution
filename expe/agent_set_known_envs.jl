@@ -50,14 +50,14 @@ generation(e::sNES{SokoAgent}) = snes_generation(e)
 
 #-------------------------Initialize Report File-------------------------------#
 results_df = DataFrame(Level = Int[], Max_gen_nb = Int[], Individual_per_gen = Int[],
-                        Nb_trial = Int[], Nb_success = Int[], Nb_gen_to_solve1 = Any[],
-                        Max_fitness1 = Float64[], Nb_gen_to_solve2 = Any[], Max_fitness2 = Float64[],
-                        Nb_gen_to_solve3 = Any[], Max_fitness3 = Float64[], Nb_gen_to_solve4 = Any[],
-                        Max_fitness4 = Float64[], Nb_gen_to_solve5 = Any[], Max_fitness5 = Float64[],
+                        Nb_trial = Int[], Nb_success = Int[], Best_gen_to_solve1 = Any[],
+                        Max_fitness1 = Float64[], Best_gen_to_solve2 = Any[], Max_fitness2 = Float64[],
+                        Best_gen_to_solve3 = Any[], Max_fitness3 = Float64[], Best_gen_to_solve4 = Any[],
+                        Max_fitness4 = Float64[], Best_gen_to_solve5 = Any[], Max_fitness5 = Float64[],
                         Mean_nb_gen_to_solve = Any[], Std_nb_gen_to_solve = Any[])
 println(results_df)
 # Those would be fixed parameters
-global max_gen = 2000
+global max_gen = 5000
 global nb_trial = 5
 
 # utils to add rows
@@ -115,7 +115,7 @@ function evaluate(e::AbstractEvolution,lvl_string::String,nb_objectives::Int)
 end
 
 function save_gen(e::AbstractEvolution,id::String)
-    path = Formatting.format("gens/agent_set_known_envs/{1}/{2:04d}",id, e.gen)
+    path = Formatting.format("gens/agent_set_known_envs2/{1}/{2:04d}",id, e.gen)
     mkpath(path)
     sort!(e.population)
     for i in eachindex(e.population)
@@ -156,7 +156,7 @@ function run!(e::AbstractEvolution,lvl_string::String,nb_objectives::Int,id::Str
     end
 
     save_gen(e_best,id)
-    return ["",best_gen_fitness,0]
+    return [e_best.gen,best_gen_fitness,0]
 end
 
 #-----------------------------Main---------------------------------------------#
@@ -169,7 +169,7 @@ for k in 1:length(levels_dict["levels_string"])
     nb_objectives= levels_dict["nb_objectives"][k]
     ind_per_gen = 0
     for trial in 1:nb_trial
-        agents = sNES{SokoAgent}(agent_model,cfg_agent,fitness_lvl;logfile=string("logs/","agent_set_known_envs/lvl_$lvl_nb/trial_$trial", ".csv"))
+        agents = sNES{SokoAgent}(agent_model,cfg_agent,fitness_lvl;logfile=string("logs/","agent_set_known_envs2/lvl_$lvl_nb/trial_$trial", ".csv"))
         ind_per_gen = length(agents.population)
         id_gens = "lvl_$lvl_nb/trial_$trial"
         results = run!(agents,lvl_str,nb_objectives,id_gens)
@@ -179,4 +179,4 @@ for k in 1:length(levels_dict["levels_string"])
     end
     add_row!(results_df,lvl_nb,ind_per_gen,Int(nb_success),nb_gens,max_fits)
 end
-CSV.write("gens/agent_set_known_envs/analysis", results_df)
+CSV.write("gens/agent_set_known_envs2/analysis", results_df)
