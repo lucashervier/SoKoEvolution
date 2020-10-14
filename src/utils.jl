@@ -11,25 +11,34 @@ function get_params_count(model)
     return size
 end
 
-function load_weights_from_array!(model,weights)
-    nb_params = get_params_count(model)
-    nb_weight = length(weights)
-    if nb_params > nb_weight
-        throw("Your weight vector is not long enough")
-    elseif nb_params < nb_weight
-        @warn("Your weight vector have more element than you have parameters to change")
-    end
-    ps = Flux.params(model)
-    layer_idx = 1
-    curr_idx = 1
-    for layer in ps
-        for i in eachindex(layer)
-            ps[layer_idx][i] = weights[curr_idx]
-            curr_idx += 1
-        end
-        layer_idx +=1
+function load_weights_from_array!(model::Chain, params::AbstractArray)
+    p = 1
+    layers = Flux.params(model)
+    for li in 1:length(layers)
+        copyto!(layers[li], 1, params, p, length(layers[li]))
+        p += length(layers[li])
     end
 end
+
+# function load_weights_from_array!(model,weights)
+#     nb_params = get_params_count(model)
+#     nb_weight = length(weights)
+#     if nb_params > nb_weight
+#         throw("Your weight vector is not long enough")
+#     elseif nb_params < nb_weight
+#         @warn("Your weight vector have more element than you have parameters to change")
+#     end
+#     ps = Flux.params(model)
+#     layer_idx = 1
+#     curr_idx = 1
+#     for layer in ps
+#         for i in eachindex(layer)
+#             ps[layer_idx][i] = weights[curr_idx]
+#             curr_idx += 1
+#         end
+#         layer_idx +=1
+#     end
+# end
 
 #-------------Utils to create GA of SokoAgent or ContinuousSokoLvl-------------#
 function initialize(itype::Type, model, cfg::NamedTuple)
