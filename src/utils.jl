@@ -237,3 +237,118 @@ function replay_continuoussokolvl(agents_path::String,agent_model,envs_path::Str
     end
     return rewards
 end
+
+# function to replay one agent on all level in envs_path being SokoLvlIndividual
+# you have to configure Griddly first and to save the video
+function replay_video_sokolvl(agent,envs_path,saving_path,video_name)
+    individualLvlNameList = readdir(envs_path)
+    video = VideoRecorder((700,700),video_name;saving_path=saving_path)
+    io = start_video(video)
+    for i in eachindex(individualLvlNameList)
+        env_str = read("$envs_path/$(individualLvlNameList[i])", String)
+        lvl = SokoLvlIndividual(env_str)
+        lvl_str = transcript_sokolvl_genes(lvl)
+
+        Griddly.load_level_string!(grid,lvl_str)
+        Griddly.reset!(game)
+
+        observation = Griddly.vector_obs(grid)
+        observation = Griddly.get_data(observation)
+
+        sprites = Griddly.observe(game)
+        sprites = Griddly.get_data(sprites)
+        add_frame!(video,io,sprites;speed=1/5,fast_display=true)
+
+        for step in 1:200
+            dir = choose_action(observation,agent)
+            reward, done = Griddly.step_player!(player1,"move", [dir])
+
+            observation = Griddly.vector_obs(grid)
+            observation = Griddly.get_data(observation)
+
+            sprites = Griddly.observe(game)
+            sprites = Griddly.get_data(sprites)
+            add_frame!(video,io,sprites;speed=1/5,fast_display=true)
+
+            if done==1
+                break
+            end
+        end
+    end
+    save_video(video,io)
+end
+
+# function to replay one agent on all level in envs_path being ContinuousSokoLvl
+# you have to configure Griddly first and to save the video
+function replay_video_continuoussokolvl(agent,envs_path,envs_model,saving_path,video_name)
+    individualLvlNameList = readdir(envs_path)
+    video = VideoRecorder((700,700),video_name;saving_path=saving_path)
+    io = start_video(video)
+    for i in eachindex(individualLvlNameList)
+        env_str = read("$envs_path/$(individualLvlNameList[i])", String)
+        lvl = ContinuousSokoLvl(env_str,env_model)
+        lvl_str = lvl.output_map
+
+        Griddly.load_level_string!(grid,lvl_str)
+        Griddly.reset!(game)
+
+        observation = Griddly.vector_obs(grid)
+        observation = Griddly.get_data(observation)
+
+        sprites = Griddly.observe(game)
+        sprites = Griddly.get_data(sprites)
+        add_frame!(video,io,sprites;speed=1/5,fast_display=true)
+
+        for step in 1:200
+            dir = choose_action(observation,agent)
+            reward, done = Griddly.step_player!(player1,"move", [dir])
+
+            observation = Griddly.vector_obs(grid)
+            observation = Griddly.get_data(observation)
+
+            sprites = Griddly.observe(game)
+            sprites = Griddly.get_data(sprites)
+            add_frame!(video,io,sprites;speed=1/5,fast_display=true)
+
+            if done==1
+                break
+            end
+        end
+    end
+    save_video(video,io)
+end
+
+function replay_video_list(agent,levels_list,saving_path,video_name)
+    video = VideoRecorder((700,700),video_name;saving_path=saving_path)
+    io = start_video(video)
+    for i in eachindex(levels_list)
+        lvl_str = levels_list[i]
+
+        Griddly.load_level_string!(grid,lvl_str)
+        Griddly.reset!(game)
+
+        observation = Griddly.vector_obs(grid)
+        observation = Griddly.get_data(observation)
+
+        sprites = Griddly.observe(game)
+        sprites = Griddly.get_data(sprites)
+        add_frame!(video,io,sprites;speed=1/5,fast_display=true)
+
+        for step in 1:200
+            dir = choose_action(observation,agent)
+            reward, done = Griddly.step_player!(player1,"move", [dir])
+
+            observation = Griddly.vector_obs(grid)
+            observation = Griddly.get_data(observation)
+
+            sprites = Griddly.observe(game)
+            sprites = Griddly.get_data(sprites)
+            add_frame!(video,io,sprites;speed=1/5,fast_display=true)
+
+            if done==1
+                break
+            end
+        end
+    end
+    save_video(video,io)
+end
