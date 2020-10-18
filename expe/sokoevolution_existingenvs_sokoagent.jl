@@ -79,16 +79,18 @@ function play_lvl(agent::SokoAgent,lvl_string::String,nb_objectives::Int)
     Griddly.load_level_string!(grid,lvl_string)
     Griddly.reset!(game)
     total_reward = 0
+    nb_step = 0
     for step in 1:200
         observation = convert(Array{Int,3},Griddly.get_data(Griddly.observe(game)))
         dir = choose_action(observation,agent)
         reward, done = Griddly.step_player!(player1,"move", [dir])
+        nb_step += 1
         total_reward += reward
         if done==1
             break
         end
     end
-    return total_reward/nb_objectives
+    return total_reward/nb_objectives + (200-nb_step)/200
 end
 
 function get_local_evaluation(agents::sNES{SokoAgent},levels_dict::Dict{String,Any})
@@ -118,7 +120,7 @@ function evaluate(e::AbstractEvolution,levels_dict::Dict{String,Any})
 end
 
 function save_gen(e::AbstractEvolution,id::String)
-    path = Formatting.format("gens/sokoevolution_existinglvl_sokoagent/{1}/{2:04d}",id, e.gen)
+    path = Formatting.format("gens/sokoevolution_existinglvl_sokoagent_fitness2/{1}/{2:04d}",id, e.gen)
     mkpath(path)
     sort!(e.population)
     for i in eachindex(e.population)
@@ -175,7 +177,7 @@ end
 #-----------------------------Main---------------------------------------------#
 for trial in 1:nb_trial
 
-    agents = sNES{SokoAgent}(agent_model,cfg_agent,overall_fitness;logfile=string("logs/","sokoevolution_existinglvl_sokoagent/trial_$trial", ".csv"))
+    agents = sNES{SokoAgent}(agent_model,cfg_agent,overall_fitness;logfile=string("logs/","sokoevolution_existinglvl_sokoagent_fitness2/trial_$trial", ".csv"))
     ind_per_gen = length(agents.population)
     results = run!(agents,levels_dict)
     overall_best_gen = results[3]
@@ -192,4 +194,4 @@ for trial in 1:nb_trial
                 ,overall_best_gen.gen,fitness_overall_this_lvl)
     end
 end
-CSV.write("gens/sokoevolution_existinglvl_sokoagent/analysis", results_df)
+CSV.write("gens/sokoevolution_existinglvl_sokoagent_fitness2/analysis", results_df)
