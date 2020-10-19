@@ -88,24 +88,50 @@ end
 # println(results_df)
 
 #-----------------------------Evaluate Function--------------------------------#
+# function fitness_lvl(agent::SokoAgent,lvl_string::String,nb_objectives::Int)
+#     transcript_sokoagent_genes!(agent)
+#     Griddly.load_level_string!(grid,lvl_string)
+#     Griddly.reset!(game)
+#     total_reward = 0
+#     observation = Griddly.observe(game)
+#     observation = Griddly.get_data(observation)
+#     for step in 1:200
+#         dir = choose_action(observation,agent)
+#         reward, done = Griddly.step_player!(player1,"move", [dir])
+#         total_reward += reward
+#         if done==1
+#             break
+#         end
+#         observation = Griddly.observe(game)
+#         observation = Griddly.get_data(observation)
+#     end
+#     return [total_reward/nb_objectives]
+# end
 function fitness_lvl(agent::SokoAgent,lvl_string::String,nb_objectives::Int)
     transcript_sokoagent_genes!(agent)
     Griddly.load_level_string!(grid,lvl_string)
     Griddly.reset!(game)
     total_reward = 0
-    observation = Griddly.observe(game)
-    observation = Griddly.get_data(observation)
+    nb_step = 0
+    no_boxes_moved = 1 # true
+    first_observation = convert(Array{Int,3},Griddly.get_data(Griddly.observe(game)))
+    nb_box = count_items(1,first_observation)
+    observation = convert(Array{Int,3},Griddly.get_data(Griddly.observe(game)))
     for step in 1:200
         dir = choose_action(observation,agent)
+        observation = convert(Array{Int,3},Griddly.get_data(Griddly.observe(game)))
         reward, done = Griddly.step_player!(player1,"move", [dir])
+        nb_step += 1
         total_reward += reward
         if done==1
             break
         end
-        observation = Griddly.observe(game)
-        observation = Griddly.get_data(observation)
     end
-    return [total_reward/nb_objectives]
+    if has_the_box_moved(first_observation,observation,1)
+        no_boxes_moved = 0 # false
+    end
+    nb_box_blocked = count_blocked_box(observation)
+    return [total_reward/nb_objectives + (200-nb_step)/200 -0.5*(nb_box_blocked/nb_box) -2*no_boxes_moved]
 end
 
 function evaluate(e::AbstractEvolution,lvl_string::String,nb_objectives::Int)
@@ -115,7 +141,7 @@ function evaluate(e::AbstractEvolution,lvl_string::String,nb_objectives::Int)
 end
 
 function save_gen(e::AbstractEvolution,id::String)
-    path = Formatting.format("gens/agent_set_known_envs2/{1}/{2:04d}",id, e.gen)
+    path = Formatting.format("gens/agent_set_known_envs_fitness3/{1}/{2:04d}",id, e.gen)
     mkpath(path)
     sort!(e.population)
     for i in eachindex(e.population)
@@ -169,7 +195,7 @@ for k in 1:length(levels_dict["levels_string"])
     nb_objectives= levels_dict["nb_objectives"][k]
     ind_per_gen = 0
     for trial in 1:nb_trial
-        agents = sNES{SokoAgent}(agent_model,cfg_agent,fitness_lvl;logfile=string("logs/","agent_set_known_envs2/lvl_$lvl_nb/trial_$trial", ".csv"))
+        agents = sNES{SokoAgent}(agent_model,cfg_agent,fitness_lvl;logfile=string("logs/","agent_set_known_envs_fitness3/lvl_$lvl_nb/trial_$trial", ".csv"))
         ind_per_gen = length(agents.population)
         id_gens = "lvl_$lvl_nb/trial_$trial"
         results = run!(agents,lvl_str,nb_objectives,id_gens)
@@ -179,4 +205,4 @@ for k in 1:length(levels_dict["levels_string"])
     end
     add_row!(results_df,lvl_nb,ind_per_gen,Int(nb_success),nb_gens,max_fits)
 end
-CSV.write("gens/agent_set_known_envs2/analysis", results_df)
+CSV.write("gens/agent_set_known_envs_fitness3/analysis", results_df)
