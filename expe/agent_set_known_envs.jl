@@ -131,7 +131,8 @@ function fitness_lvl(agent::SokoAgent,lvl_string::String,nb_objectives::Int)
         no_boxes_moved = 0 # false
     end
     nb_box_blocked = count_blocked_box(observation)
-    return [total_reward/nb_objectives + (200-nb_step)/200 -0.5*(nb_box_blocked/nb_box) -2*no_boxes_moved]
+    fitness = total_reward/nb_objectives + (200-nb_step)/200 -0.5*(nb_box_blocked/nb_box) -2*no_boxes_moved
+    return [fitness]
 end
 
 function evaluate(e::AbstractEvolution,lvl_string::String,nb_objectives::Int)
