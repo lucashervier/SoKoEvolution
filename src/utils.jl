@@ -39,7 +39,92 @@ end
 #         layer_idx +=1
 #     end
 # end
+#-------------Utils for some fitness function----------------------------------#
+function has_the_box_moved(old_observation,new_observation,box_idx)::Bool
+    old_box = old_observation[box_idx,:,:]
+    new_box = new_observation[box_idx,:,:]
 
+    if old_box-new_box==zeros(8,8)
+        return false
+    end
+    return true
+end
+
+function count_items(item_idx::Int,observation)
+    item_obs = observation[item_idx,:,:]
+    return sum(item_obs)
+end
+
+function count_blocked_box(observation)
+    nb_box = count_items(1,observation)
+    box_see = 0
+    box_blocked = 0
+    box_obs = observation[1,:,:]
+    wall_obs = observation[3,:,:]
+    box_on_holes = observation[2,:,:]
+    width,height = size(box_obs)
+    for i in 1:height,j in 1:width
+        # tell if there is a box at poss (i,j)
+        box_in_i_j = (box_obs[i,j] == 1)
+        if box_in_i_j
+            box_see += 1
+
+            # handle upper border cases
+            if i == 1
+                # special corner cases
+                if j == 1
+                    box_blocked += 1
+                elseif j == width
+                    box_blocked += 1
+                # other border
+                else
+                    # if obstacles on a side of the box its blocked
+                    if (box_obs[i,j-1] == 1 || wall_obs[i,j-1] == 1 || box_on_holes[i,j-1] == 1 || box_obs[i,j+1] == 1 || wall_obs[i,j+1] == 1 || box_on_holes[i,j+1] == 1)
+                        box_blocked += 1
+                    end
+                end
+            # handle lower border cases
+            elseif i == height
+                # special corner cases
+                if j == 1
+                    box_blocked += 1
+                elseif j == width
+                    box_blocked += 1
+                # other border
+                else
+                    # if obstacles on a side of the box its blocked
+                    if (box_obs[i,j-1] == 1 || wall_obs[i,j-1] == 1 || box_on_holes[i,j-1] == 1 || box_obs[i,j+1] == 1 || wall_obs[i,j+1] == 1 || box_on_holes[i,j+1] == 1)
+                        box_blocked += 1
+                    end
+                end
+            # handle right border case scenario
+            elseif j == 1
+                # if obstacles on a up/downside of the box its blocked
+                if (box_obs[i-1,j] == 1 || wall_obs[i-1,j] == 1 || box_on_holes[i-1,j] == 1 || box_obs[i+1,j] == 1 || wall_obs[i+1,j] == 1 || box_on_holes[i+1,j] == 1)
+                    box_blocked += 1
+                end
+            # handle left border case scenario
+            elseif j == width
+                # if obstacles on a up/downside of the box its blocked
+                if (box_obs[i-1,j] == 1 || wall_obs[i-1,j] == 1 || box_on_holes[i-1,j] == 1 || box_obs[i+1,j] == 1 || wall_obs[i+1,j] == 1 || box_on_holes[i+1,j] == 1)
+                    box_blocked += 1
+                end
+            # all non border case
+            else
+                up_or_down_obstacles = (box_obs[i-1,j] == 1 || wall_obs[i-1,j] == 1 || box_on_holes[i-1,j] == 1 || box_obs[i+1,j] == 1 || wall_obs[i+1,j] == 1 || box_on_holes[i+1,j] == 1)
+                left_or_right_obstacles = (box_obs[i,j-1] == 1 || wall_obs[i,j-1] == 1 || box_on_holes[i,j-1] == 1 || box_obs[i,j+1] == 1 || wall_obs[i,j+1] == 1 || box_on_holes[i,j+1] == 1)
+                if (up_or_down_obstacles&&left_or_right_obstacles)
+                    box_blocked +=1
+                end
+            end
+        end
+        # if we check all boxes we quit
+        if box_see == nb_box
+            return box_blocked
+        end
+    end
+    return box_blocked
+end
 #-------------Utils to create GA of SokoAgent or ContinuousSokoLvl-------------#
 function initialize(itype::Type, model, cfg::NamedTuple)
     population = Array{itype}(undef, cfg.n_population)
