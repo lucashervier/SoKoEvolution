@@ -11,6 +11,7 @@ using ProgressBars
 using JSON
 import Cambrian: mutate, crossover, populate, save_gen, generation
 import EvolutionaryStrategies: snes_populate, snes_generation
+using Logging
 
 include("../src/utils.jl")
 include("../src/soko_agent.jl")
@@ -124,6 +125,7 @@ function fitness_lvl(agent::SokoAgent,lvl_string::String,nb_objectives::Int)
         nb_step += 1
         total_reward += reward
         if done==1
+            no_boxes_moved = 0
             break
         end
     end
@@ -131,18 +133,31 @@ function fitness_lvl(agent::SokoAgent,lvl_string::String,nb_objectives::Int)
         no_boxes_moved = 0 # false
     end
     nb_box_blocked = count_blocked_box(observation)
-    fitness = total_reward/nb_objectives + (200-nb_step)/200 -0.5*(nb_box_blocked/nb_box) -2*no_boxes_moved
-    return [fitness]
+    fitness1 = total_reward/nb_objectives
+    fitness2 = (200-nb_step)/200
+    fitness3 =  -0.5*(nb_box_blocked/nb_box)
+    fitness4 = -2*no_boxes_moved
+    return [fitness1,fitness2,fitness3,fitness4]
 end
 
 function evaluate(e::AbstractEvolution,lvl_string::String,nb_objectives::Int)
+    best_fitness = -Inf
+    best_detailed_fitness = []
     for i in eachindex(e.population)
-        e.population[i].fitness[:] = e.fitness(e.population[i],lvl_string,nb_objectives)
+        detailed_fitness = e.fitness(e.population[i],lvl_string,nb_objectives)
+        fitness = sum(detailed_fitness)
+
+        if fitness > best_fitness
+            best_fitness = fitness
+            best_detailed_fitness = detailed_fitness
+        end
+        e.population[i].fitness[:] = [fitness]
     end
+    return best_detailed_fitness
 end
 
 function save_gen(e::AbstractEvolution,id::String)
-    path = Formatting.format("gens/agent_set_known_envs_fitness3/{1}/{2:04d}",id, e.gen)
+    path = Formatting.format("gens/agent_set_known_envs_fitness4/{1}/{2:04d}",id, e.gen)
     mkpath(path)
     sort!(e.population)
     for i in eachindex(e.population)
@@ -151,6 +166,16 @@ function save_gen(e::AbstractEvolution,id::String)
     end
 end
 
+function log_gen(e::AbstractEvolution,best_detailed_fitness)
+    for d in 1:e.config.d_fitness
+        maxs = map(i->i.fitness[d], e.population)
+        with_logger(e.logger) do
+            @info Formatting.format("{1:04d},{2:e},{3:e},{4:e},{5:e},{6:e},{7:e},{8:e}",
+                                    e.gen, maximum(maxs), mean(maxs), std(maxs),best_detailed_fitness[1],best_detailed_fitness[2],best_detailed_fitness[3],best_detailed_fitness[4])
+        end
+    end
+    flush(e.logger.stream)
+end
 # add a step! and run function for this evolution strategies
 function step!(e::AbstractEvolution,lvl_string::String,nb_objectives::Int)
     e.gen += 1
@@ -158,10 +183,10 @@ function step!(e::AbstractEvolution,lvl_string::String,nb_objectives::Int)
         populate(e)
     end
 
-    evaluate(e,lvl_string,nb_objectives)
+    best_detailed_fitness = evaluate(e,lvl_string,nb_objectives)
     generation(e)
     if ((e.config.log_gen > 0) && mod(e.gen, e.config.log_gen) == 0)
-        log_gen(e)
+        log_gen(e,best_detailed_fitness)
     end
 end
 
@@ -172,7 +197,7 @@ function run!(e::AbstractEvolution,lvl_string::String,nb_objectives::Int,id::Str
     for i in tqdm((e.gen+1):e.config.n_gen)
         step!(e,lvl_string,nb_objectives)
         best_agent = sort(e.population)[end]
-        if best_agent.fitness[1]>=1
+        if best_agent.fitness[1]>=1.95
             save_gen(e,id)
             success = true
             return [e.gen,best_agent.fitness[1],1]
@@ -196,7 +221,7 @@ for k in 1:length(levels_dict["levels_string"])
     nb_objectives= levels_dict["nb_objectives"][k]
     ind_per_gen = 0
     for trial in 1:nb_trial
-        agents = sNES{SokoAgent}(agent_model,cfg_agent,fitness_lvl;logfile=string("logs/","agent_set_known_envs_fitness3/lvl_$lvl_nb/trial_$trial", ".csv"))
+        agents = sNES{SokoAgent}(agent_model,cfg_agent,fitness_lvl;logfile=string("logs/","agent_set_known_envs_fitness4/lvl_$lvl_nb/trial_$trial", ".csv"))
         ind_per_gen = length(agents.population)
         id_gens = "lvl_$lvl_nb/trial_$trial"
         results = run!(agents,lvl_str,nb_objectives,id_gens)
@@ -206,4 +231,4 @@ for k in 1:length(levels_dict["levels_string"])
     end
     add_row!(results_df,lvl_nb,ind_per_gen,Int(nb_success),nb_gens,max_fits)
 end
-CSV.write("gens/agent_set_known_envs_fitness3/analysis", results_df)
+CSV.write("gens/agent_set_known_envs_fitness4/analysis", results_df)
