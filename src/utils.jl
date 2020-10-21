@@ -60,8 +60,11 @@ function count_blocked_box(observation)
     box_see = 0
     box_blocked = 0
     box_obs = observation[1,:,:]
+    box_obs = permutedims(box_obs,[2,1])
     wall_obs = observation[3,:,:]
+    wall_obs = permutedims(wall_obs,[2,1])
     box_on_holes = observation[2,:,:]
+    box_on_holes = permutedims(box_on_holes,[2,1])
     width,height = size(box_obs)
     for i in 1:height,j in 1:width
         # tell if there is a box at poss (i,j)
@@ -124,6 +127,98 @@ function count_blocked_box(observation)
         end
     end
     return box_blocked
+end
+
+function get_keys(map::Dict{Int64,Set{Int64}},value::Int64)
+    keys_list = filter(key -> in(value,map[key]),collect(keys(map)))
+    return keys_list
+end
+
+function merge_set!(map::Dict{Int64,Set{Int64}},origin1::Int64,origin2::Int64)
+    origin_kept = min(origin1,origin2)
+    origin_deleted = max(origin1,origin2)
+    map[origin_kept] = union(map[origin1],map[origin2])
+    delete!(map,origin_deleted)
+end
+
+function get_connectivity_map(observation)
+    # dict with all the connectivity zone info with the origin node (uppest leftest) as key
+    map = Dict{Int64,Set{Int64}}()
+    # obstacles which define a connectivity zone are: box, box over holes and walls
+    obstacles_map = observation[1,:,:] + observation[2,:,:] + observation[3,:,:]
+    obstacles_map = permutedims(obstacles_map,[2,1])
+    width,height = size(obstacles_map)
+    for y_pos in 1:height, x_pos in 1:width
+        # we consider only free spaces
+        if obstacles_map[y_pos,x_pos] == 0
+            absolute_pos = x_pos + (y_pos-1)*width
+            # check if you are in a set otherwise you will be an origin node
+            origin_node = get_keys(map,absolute_pos)
+            if length(origin_node)==1
+                origin_node = origin_node[1]
+            elseif length(origin_node)==0
+                origin_node = absolute_pos
+                push!(map,origin_node=>Set([origin_node]))
+            else
+                println("Should not be possible")
+            end
+            # you are at the bottom right corner
+            if (y_pos==height)&&(x_pos==width)
+                # do nothing, since you are either origin or already in a set
+                continue
+            # you are at the right border so you only look below
+            elseif x_pos==width
+                if obstacles_map[y_pos+1,x_pos] == 0
+                    below_node_pos = x_pos + y_pos*width
+                    push!(map[origin_node],below_node_pos)
+                end
+            # you are at the bottom so you only look at your right
+            elseif y_pos == height
+                if obstacles_map[y_pos,x_pos+1] == 0
+                    right_node_pos = x_pos+1+(y_pos-1)*width
+                    # node at your right can have an origin (they can be below someone)
+                    origin_right_node = get_keys(map,right_node_pos)
+                    if length(origin_right_node)==1
+                        origin_right_node = origin_right_node[1]
+                        # in that case we merge both set if they got a different origin
+                        # otherwise you don't need to add it (already in set)
+                        if origin_right_node!=origin_node
+                            merge_set!(map,origin_node,origin_right_node)
+                        end
+                    elseif length(origin_right_node)==0
+                        push!(map[origin_node],right_node_pos)
+                    else
+                        println("Something is wrong")
+                    end
+                end
+            # look at the nodes on your right and down
+            else
+                # first add the node below if it exists
+                if obstacles_map[y_pos+1,x_pos] == 0
+                    below_node_pos = x_pos + y_pos*width
+                    push!(map[origin_node],below_node_pos)
+                end
+                if obstacles_map[y_pos,x_pos+1] == 0
+                    right_node_pos = x_pos+1+(y_pos-1)*width
+                    # node at your right can have an origin (they can be below someone)
+                    origin_right_node = get_keys(map,right_node_pos)
+                    if length(origin_right_node)==1
+                        origin_right_node = origin_right_node[1]
+                        # in that case we merge both set if they got a different origin
+                        # otherwise you don't need to add it (already in set)
+                        if origin_right_node!=origin_node
+                            merge_set!(map,origin_node,origin_right_node)
+                        end
+                    elseif length(origin_right_node)==0
+                        push!(map[origin_node],right_node_pos)
+                    else
+                        println("Something is wrong")
+                    end
+                end
+            end
+        end
+    end
+    return map
 end
 #-------------Utils to create GA of SokoAgent or ContinuousSokoLvl-------------#
 function initialize(itype::Type, model, cfg::NamedTuple)
