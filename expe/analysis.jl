@@ -21,7 +21,7 @@ envs_gen_path = "..//results//gens//sokoevo_rnnagents_directenv_sokoban3"
 game_name = "sokoban3.yaml"
 
 agent_model = Chain(
-                    Conv((3,3),4=>1,pad=(1,1),relu),
+                    Conv((3,3),5=>1,pad=(1,1),relu),
                     Flux.flatten,
                     RNN(144,144),
                     Dense(144,4),

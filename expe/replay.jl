@@ -1,6 +1,7 @@
 using Griddly
 using Cambrian
 using Flux
+using JSON
 
 include("../src/sokolvl_individual.jl")
 include("../src/utils.jl")
@@ -23,10 +24,18 @@ agent_model = Chain(
                     Dense(64,4),
                     softmax
                     )
-agent_path = "..//Buboresults//Buboresults//gens//sokoevo_rnnagents_directenv_sokoban3//best//agents//7978//0013.dna"
-envs_path = "..//Buboresults//Buboresults//gens//sokoevo_rnnagents_directenv_sokoban3//best//envs//0064"
-
+agent_path = "..//Buboresults//Buboresults//gens//sokoevolution_existinglvl_sokoagent_fitness2//overall//trial_1//3151//0015.dna"
 agent_string = read("$agent_path", String)
 agent = SokoAgent(agent_string,agent_model)
+# envs_path = "..//Buboresults//Buboresults//gens//sokoevo_rnnagents_directenv_sokoban3//best//envs//0064"
 
-replay_sokolvl(agent,envs_path;rendering=true)
+levels_path = "cfg/set_known_envs_2.json"
+levels_string = read(levels_path,String)
+levels_dict = JSON.Parser.parse(levels_string)
+levels_list = levels_dict["levels_string"]
+
+# replay_sokolvl(agent,envs_path;rendering=true)
+for i in eachindex(levels_list)
+    reward = replay(agent,levels_list[i];rendering=true)
+    println(reward)
+end
