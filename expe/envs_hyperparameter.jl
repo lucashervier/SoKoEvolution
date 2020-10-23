@@ -65,8 +65,12 @@ function fitness_env(env::ContinuousSokoLvl)
     Griddly.reset!(game)
 
     total_reward = 0
-    nb_objectives =
+
     first_observation = convert(Array{Int,3},Griddly.get_data(Griddly.observe(game)))
+    nb_objectives = min(count_items(1,first_observation),count_items(4,first_observation))
+    if nb_objectives==0
+        return [0,0,-10]
+    end
     initial_connectivity = get_connectivity_map(first_observation)
     initial_connectivity_number = length(keys(initial_connectivity))
     if initial_connectivity_number==0
