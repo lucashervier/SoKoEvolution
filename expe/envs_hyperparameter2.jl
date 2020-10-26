@@ -57,6 +57,27 @@ expert_string = read("$expert_path", String)
 expert = SokoAgent(expert_string,agent_model)
 #--------------------------------Evaluate helper-------------------------------#
 # Helpers for the evaluate function
+function evaluate_random(env::ContinuousSokoLvl)
+    apply_continuoussokolvl_genes!(env)
+    lvl_str = write_map!(env)
+
+    Griddly.load_level_string!(grid,lvl_str)
+    Griddly.reset!(game)
+
+    total_reward = 0
+
+    for step in 1:100
+        dir = rand(1:4)
+        reward, done = Griddly.step_player!(player1,"move", [dir])
+        total_reward += reward
+        if done==1
+            break
+        end
+    end
+
+    return total_reward
+end
+
 function fitness_env(env::ContinuousSokoLvl)
     apply_continuoussokolvl_genes!(env)
     lvl_str = write_map!(env)
@@ -69,12 +90,14 @@ function fitness_env(env::ContinuousSokoLvl)
     first_observation = convert(Array{Int,3},Griddly.get_data(Griddly.observe(game)))
     nb_objectives = min(count_items(1,first_observation),count_items(4,first_observation))
     if nb_objectives==0
-        return [0,0,-10]
+        return [0,0,-10,0,0]
+    elseif nb_objectives>5
+        return [0,0,0,0,0]
     end
     initial_connectivity = get_connectivity_map(first_observation)
     initial_connectivity_number = length(keys(initial_connectivity))
     if initial_connectivity_number==0
-        return [0,-10,-1]
+        return [0,0,0,0,0]
     end
     no_boxes_moved = 1 # true
     observation = convert(Array{Int,3},Griddly.get_data(Griddly.observe(game)))
@@ -88,15 +111,14 @@ function fitness_env(env::ContinuousSokoLvl)
             break
         end
     end
-    final_connectivity = get_connectivity_map(observation)
-    final_connectivity_number = length(keys(final_connectivity))
     if (no_boxes_moved==1)&&has_the_box_moved(first_observation,observation,1)
         no_boxes_moved == 0 #false
     end
-    fitness1 = total_reward/nb_objectives
-    fitness2 = 0.5*(initial_connectivity_number-final_connectivity_number)/max(initial_connectivity_number,final_connectivity_number)
-    fitness3 = -1*no_boxes_moved
-    return [fitness1,fitness2,fitness3]
+
+    agent_reward = total_reward/nb_objectives
+    random_reward = evaluate_random(env)
+
+    return [agent_reward,random_reward,nb_objectives,initial_connectivity_number,no_boxes_moved]
 end
 
 function evaluate_with_detailed(e::AbstractEvolution)
@@ -104,7 +126,15 @@ function evaluate_with_detailed(e::AbstractEvolution)
     best_detailed_fitness = []
     for i in eachindex(e.population)
         detailed_fitness = e.fitness(e.population[i])
-        fitness = sum(detailed_fitness)
+        fitness = 0
+        if detailed_fitness[3] == 0
+            fitness = -10
+        elseif detailed_fitness[4] == 0
+            fitness = -10
+        else
+            fitness = (detailed_fitness[1]-detailed_fitness[2])/detailed_fitness[3] +
+                        detailed_fitness[4]/detailed_fitness[3] -2*detailed_fitness[5]
+        end
 
         if fitness > best_fitness
             best_fitness = fitness
@@ -119,8 +149,8 @@ function log_gen(e::AbstractEvolution,best_detailed_fitness)
     for d in 1:e.config.d_fitness
         maxs = map(i->i.fitness[d], e.population)
         with_logger(e.logger) do
-            @info Formatting.format("{1:04d},{2:e},{3:e},{4:e},{5:e},{6:e},{7:e}",
-                                    e.gen, maximum(maxs), mean(maxs), std(maxs),best_detailed_fitness[1],best_detailed_fitness[2],best_detailed_fitness[3])
+            @info Formatting.format("{1:04d},{2:e},{3:e},{4:e},{5:e},{6:e},{7:e},{8:e},{9:e}",
+                                    e.gen, maximum(maxs), mean(maxs), std(maxs),best_detailed_fitness[1],best_detailed_fitness[2],best_detailed_fitness[3],best_detailed_fitness[4],best_detailed_fitness[5])
         end
     end
     flush(e.logger.stream)
@@ -166,7 +196,7 @@ function run!(e::sNES{ContinuousSokoLvl})
     end
 end
 #------------------------------------Main------------------------------------#
-envs = sNES{ContinuousSokoLvl}(envs_model,cfg_envs,fitness_env;logfile=string("logs/","envs_hyperparameter//envs_hyperparameter", ".csv"))
+envs = sNES{ContinuousSokoLvl}(envs_model,cfg_envs,fitness_env;logfile=string("logs/","envs_hyperparameter2//envs_hyperparameter", ".csv"))
 
 run!(envs)
 
