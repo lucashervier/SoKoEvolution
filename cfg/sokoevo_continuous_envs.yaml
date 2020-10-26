@@ -9,7 +9,7 @@ tournament_size: 3
 p_mutation: 0.3
 p_crossover: 0
 n_parents: 2
-n_gen: 50000
-life_env: 50
+n_gen: 5000
+life_env: 1
 log_gen: 1
 save_gen: 1
