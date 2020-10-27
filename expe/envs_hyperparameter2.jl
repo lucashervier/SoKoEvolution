@@ -52,7 +52,7 @@ selection(pop::Array{<:Individual}) = Cambrian.tournament_selection(pop, cfg_env
 populate(e::sNES{ContinuousSokoLvl}) = snes_populate(e)
 generation(e::sNES{ContinuousSokoLvl}) = snes_generation(e)
 #--------------------------------"Expert" Player-------------------------------#
-expert_path = "..//Buboresults//Buboresults//gens//sokoevolution_existinglvl_sokoagent_fitness2//overall//trial_1//3151//0015.dna"
+expert_path = "..//results//gens//sokoevolution_existinglvl_sokoagent_fitness2//overall//trial_1//3151//0015.dna"
 expert_string = read("$expert_path", String)
 expert = SokoAgent(expert_string,agent_model)
 #--------------------------------Evaluate helper-------------------------------#
@@ -66,7 +66,7 @@ function evaluate_random(env::ContinuousSokoLvl)
 
     total_reward = 0
 
-    for step in 1:100
+    for step in 1:200
         dir = rand(1:4)
         reward, done = Griddly.step_player!(player1,"move", [dir])
         total_reward += reward
@@ -90,7 +90,7 @@ function fitness_env(env::ContinuousSokoLvl)
     first_observation = convert(Array{Int,3},Griddly.get_data(Griddly.observe(game)))
     nb_objectives = min(count_items(1,first_observation),count_items(4,first_observation))
     if nb_objectives==0
-        return [0,0,-10,0,0]
+        return [0,0,0,0,0]
     elseif nb_objectives>5
         return [0,0,0,0,0]
     end
@@ -98,10 +98,12 @@ function fitness_env(env::ContinuousSokoLvl)
     initial_connectivity_number = length(keys(initial_connectivity))
     if initial_connectivity_number==0
         return [0,0,0,0,0]
+    elseif initial_connectivity_number > 10
+        return [0,0,0,0,0]
     end
     no_boxes_moved = 1 # true
     observation = convert(Array{Int,3},Griddly.get_data(Griddly.observe(game)))
-    for step in 1:100
+    for step in 1:200
         dir = choose_action(observation,expert)
         reward, done = Griddly.step_player!(player1,"move", [dir])
         observation = convert(Array{Int,3},Griddly.get_data(Griddly.observe(game)))
@@ -133,7 +135,7 @@ function evaluate_with_detailed(e::AbstractEvolution)
             fitness = -10
         else
             fitness = (detailed_fitness[1]-detailed_fitness[2])/detailed_fitness[3] +
-                        detailed_fitness[4]/detailed_fitness[3] -2*detailed_fitness[5]
+                        detailed_fitness[4]/10 -2*detailed_fitness[5]
         end
 
         if fitness > best_fitness
@@ -158,7 +160,7 @@ end
 
 # overrides save_gen for sNES population
 function save_gen(e::sNES{ContinuousSokoLvl})
-    path = Formatting.format("gens/envs_hyperparameter/{1:04d}", e.gen)
+    path = Formatting.format("gens/envs_hyperparameter3/{1:04d}", e.gen)
     mkpath(path)
     sort!(e.population)
     for i in eachindex(e.population)
@@ -196,7 +198,7 @@ function run!(e::sNES{ContinuousSokoLvl})
     end
 end
 #------------------------------------Main------------------------------------#
-envs = sNES{ContinuousSokoLvl}(envs_model,cfg_envs,fitness_env;logfile=string("logs/","envs_hyperparameter2//envs_hyperparameter", ".csv"))
+envs = sNES{ContinuousSokoLvl}(envs_model,cfg_envs,fitness_env;logfile=string("logs/","envs_hyperparameter3//envs_hyperparameter", ".csv"))
 
 run!(envs)
 
