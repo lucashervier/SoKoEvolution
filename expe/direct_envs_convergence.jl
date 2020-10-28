@@ -51,7 +51,8 @@ end
 ref_bit = from_str_to_bit(ref_lvl_str)
 
 function fitness_env(env::SokoLvlIndividual)
-    return [-hamming(ref_bit,env.genes)/2]
+    bit_map = reshape(env.genes,(8,8,4)))
+    return [-hamming(ref_bit,bit_map)/2]
 end
 
 function evaluate(e::AbstractEvolution)
