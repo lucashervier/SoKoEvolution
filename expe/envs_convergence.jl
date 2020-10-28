@@ -69,9 +69,20 @@ function evaluate(e::AbstractEvolution)
     end
 end
 
+function log_gen(e::AbstractEvolution)
+    for d in 1:e.config.d_fitness
+        maxs = map(i->i.fitness[d], e.population)
+        with_logger(e.logger) do
+            @info Formatting.format("{1:05d},{2:e},{3:e},{4:e}",
+                                    e.gen, maximum(maxs), mean(maxs), std(maxs))
+        end
+    end
+    flush(e.logger.stream)
+end
+
 # overrides save_gen for sNES population
 function save_gen(e::sNES{ContinuousSokoLvl})
-    path = Formatting.format("gens/$expe_name/{1:04d}", e.gen)
+    path = Formatting.format("gens/$expe_name/{1:05d}", e.gen)
     mkpath(path)
     sort!(e.population)
     for i in eachindex(e.population)
@@ -110,7 +121,7 @@ function run!(e::sNES{ContinuousSokoLvl})
     save_gen(e_best)
 end
 #------------------------------------Main------------------------------------#
-envs = sNES{ContinuousSokoLvl}(envs_model,cfg_envs,fitness_env;logfile=string("logs/","$expe_name//envs_hyperparameter", ".csv"))
+envs = sNES{ContinuousSokoLvl}(envs_model,cfg_envs,fitness_env;logfile=string("logs//","$expe_name//envs_hyperparameter", ".csv"))
 
 run!(envs)
 
