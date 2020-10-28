@@ -102,6 +102,7 @@ function fitness_env(env::ContinuousSokoLvl)
     initial_connectivity_number = length(keys(initial_connectivity))
     if initial_connectivity_number==0
         return [0,0,0,0,0,0]
+    end
     no_boxes_moved = 1 # true
     observation = convert(Array{Int,3},Griddly.get_data(Griddly.observe(game)))
     for step in 1:200
