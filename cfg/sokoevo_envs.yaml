@@ -10,9 +10,9 @@ p_mutation: 0.01
 p_crossover: 0.1
 n_parents: 2
 n_population: 13
-n_gen: 500000
+n_gen: 50000
 log_gen: 1
-save_gen: 10
+save_gen: 0
 objectives_max: 10
 connectivity_max: 7
-life_env: 50
+life_env: 20
