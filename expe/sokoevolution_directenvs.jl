@@ -17,7 +17,7 @@ include("../src/utils.jl")
 include("../src/soko_agent.jl")
 #----------------------------Named Parameters----------------------------------#
 game_name = "sokoban3"
-expe_name = "your_expe_name"
+expe_name = "new_fitness_direct_envs"
 #----------------------------Griddly Resources---------------------------------#
 image_path = joinpath(@__DIR__,"..","resources","images")
 shader_path = joinpath(@__DIR__,"..","resources","shaders")
@@ -70,30 +70,30 @@ function save_gen(e1::AbstractEvolution,e2::AbstractEvolution;id1="envs",id2="ag
 end
 # # overrides log_gen if you want to add some infos in logs file, to adapt with
 # # your experiment, ignore if the classic logs suit you
-# function log_gen(e::GAEvo{SokoLvlIndividual})
-#     best = sort(e.population)[end]
-#     lvl_str = transcript_sokolvl_genes(best)
-#     nb_boxes,nb_holes,nb_objectives,initial_connectivity_number,random_reward = get_detailed_info(lvl_str)
-#     for d in 1:e.config.d_fitness
-#         maxs = map(i->i.fitness[d], e.population)
-#         with_logger(e.logger) do
-#             @info Formatting.format("{1:05d},{2:e},{3:e},{4:e},{5:e},{6:e},{7:e},{8:e},{9:e}",
-#                                     e.gen, maximum(maxs), mean(maxs), std(maxs),nb_boxes,nb_holes,nb_objectives,initial_connectivity_number,random_reward)
-#         end
-#     end
-#     flush(e.logger.stream)
-# end
-#
-# function log_gen(e::sNES{SokoAgent})
-#     for d in 1:e.config.d_fitness
-#         maxs = map(i->i.fitness[d], e.population)
-#         with_logger(e.logger) do
-#             @info Formatting.format("{1:05d},{2:e},{3:e},{4:e}",
-#                                     e.gen, maximum(maxs), mean(maxs), std(maxs))
-#         end
-#     end
-#     flush(e.logger.stream)
-# end
+function log_gen(e::GAEvo{SokoLvlIndividual})
+    best = sort(e.population)[end]
+    lvl_str = transcript_sokolvl_genes(best)
+    nb_boxes,nb_holes,nb_objectives,initial_connectivity_number,random_reward = get_detailed_info(lvl_str)
+    for d in 1:e.config.d_fitness
+        maxs = map(i->i.fitness[d], e.population)
+        with_logger(e.logger) do
+            @info Formatting.format("{1:05d},{2:e},{3:e},{4:e},{5:e},{6:e},{7:e},{8:e},{9:e}",
+                                    e.gen, maximum(maxs), mean(maxs), std(maxs),nb_boxes,nb_holes,nb_objectives,initial_connectivity_number,random_reward)
+        end
+    end
+    flush(e.logger.stream)
+end
+
+function log_gen(e::sNES{SokoAgent})
+    for d in 1:e.config.d_fitness
+        maxs = map(i->i.fitness[d], e.population)
+        with_logger(e.logger) do
+            @info Formatting.format("{1:05d},{2:e},{3:e},{4:e}",
+                                    e.gen, maximum(maxs), mean(maxs), std(maxs))
+        end
+    end
+    flush(e.logger.stream)
+end
 #---------------------------Evaluate Helpers-----------------------------------#
 # get the performance of a random agent on the given level
 function evaluate_random(lvl_str::String)
@@ -208,7 +208,7 @@ function get_local_evaluation(envs::GAEvo{SokoLvlIndividual},agents::sNES{SokoAg
             end
         else
             # add fitness factors depending only on envs level shape
-            objectives_reward = - (nb_boxes - nb_holes)^2 - (nb_objectives>objectives_max)
+            objectives_reward = - (nb_boxes != nb_holes) - (nb_objectives>objectives_max)
             connectivity_reward = - (initial_connectivity_number>connectivity_max)
             for j in 1:agents_size
                 # the "main" reward is the agent reward induced by game's rules
@@ -216,7 +216,7 @@ function get_local_evaluation(envs::GAEvo{SokoLvlIndividual},agents::sNES{SokoAg
                 # optimize the number of steps
                 step_reward = (200-nb_step)/200
                 # penalty for "lazy" agents
-                boxes_moving_reward = - no_boxes_moved
+                boxes_moving_reward = - 2*no_boxes_moved
                 scoring_reward = (agent_reward - random_reward)/nb_objectives
                 # in this pos add your local evaluation of an agent "j" on lvl "i"
                 local_eval[i,j] = scoring_reward + step_reward + objectives_reward + connectivity_reward + boxes_moving_reward
