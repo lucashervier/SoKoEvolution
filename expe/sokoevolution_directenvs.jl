@@ -17,7 +17,7 @@ include("../src/utils.jl")
 include("../src/soko_agent.jl")
 #----------------------------Named Parameters----------------------------------#
 game_name = "sokoban3"
-expe_name = "new_fitness_direct_envs"
+expe_name = "new_fitness_direct_envs4"
 #----------------------------Griddly Resources---------------------------------#
 image_path = joinpath(@__DIR__,"..","resources","images")
 shader_path = joinpath(@__DIR__,"..","resources","shaders")
@@ -208,7 +208,7 @@ function get_local_evaluation(envs::GAEvo{SokoLvlIndividual},agents::sNES{SokoAg
             end
         else
             # add fitness factors depending only on envs level shape
-            objectives_reward = - (nb_boxes != nb_holes) - (nb_objectives>objectives_max)
+            objectives_reward = - abs((nb_boxes - nb_holes))/nb_objectives - (nb_objectives>objectives_max)
             connectivity_reward = - (initial_connectivity_number>connectivity_max)
             for j in 1:agents_size
                 # the "main" reward is the agent reward induced by game's rules
@@ -314,7 +314,7 @@ function run!(e1::AbstractEvolution,e2::AbstractEvolution)
         end
     end
     save_gen(best_envs_envs,best_envs_agents;id1="overall_best_envs/envs",id2="overall_best_envs/agents")
-    save_gen(best_agents_agents,best_agents_envs;id1="overall_best_agents/envs",id2="overall_best_agents/agents")
+    save_gen(best_agents_envs,best_agents_agents;id1="overall_best_agents/envs",id2="overall_best_agents/agents")
 end
 #------------------------------------Main--------------------------------------#
 envs = GAEvo{SokoLvlIndividual}(cfg_envs,fitness_env;logfile=string("logs/","$expe_name/envs", ".csv"))
