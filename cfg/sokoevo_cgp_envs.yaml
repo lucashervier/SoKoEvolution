@@ -1,0 +1,33 @@
+# Sokoban level settings
+width: 8
+height: 8
+objects_char_list: ["b","w","h","A","."]
+agent_idx: 4
+objectives_max: 10
+connectivity_max: 7
+life_env: 20
+# Cambrian.jl settings
+seed: 0
+d_fitness: 1
+n_population: 13
+n_elite: 2
+n_gen: 5000
+log_gen: 1
+save_gen: 20
+m_rate: 0.01
+# CartesianGeneticProgramming.jl settings
+rows: 4
+columns: 13
+recur: 0.2
+n_in: 4
+n_out: 5
+out_m_rate: 0.1
+functions:
+  - f_add
+  - f_subtract
+  - f_mult
+  - f_abs
+  - f_exp
+  # - f_sin
+  - f_lt
+  - f_gt
