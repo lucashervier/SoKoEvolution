@@ -134,6 +134,72 @@ function write_map!(continuoussokolvl::ContinuousSokoLvl)
     return lvl_str
 end
 
+function write_map2!(continuoussokolvl::ContinuousSokoLvl)
+    # first get the size of the level
+    width = continuoussokolvl.width
+    height = continuoussokolvl.height
+    # get the list of objects the level may include
+    objects_char_list = continuoussokolvl.objects_char_list
+    # to know if the agent was selected
+    agent_idx = continuoussokolvl.agent_idx
+    agent_in_place = false
+
+    lvl_str = """"""
+    if width%2 == 0
+        x_center_grid = width/2 + 1/2
+    else
+        x_center_grid = width/2
+    end
+    if height%2 == 0
+        y_center_grid = height/2 + 1/2
+    else
+        y_center_grid = height/2
+    end
+    for y_pos in 1:height
+        for x_pos in 1:width
+            x = x_pos - x_center_grid
+            y = y_pos - y_center_grid
+            r = sqrt(x^2 + y^2)
+            phi = 0
+            if x==0
+                if y > 0
+                    phi = pi/2
+                elseif y < 0
+                    phi = -pi/2
+                else
+                    phi = 0
+                end
+            else
+                phi = atan(y,x)
+            end
+            input = [x,y,r,phi,x_pos,y_pos,(x_pos+(y_pos-1)*width)/(width*height),(x_pos+(y_pos-1)*width)/(width*height)-1,(x_pos+(y_pos-1)*width)/(width*height)+1,(x_pos+(y_pos-1)*width)/(width*height)+width,(x_pos+(y_pos-1)*width)/(width*height)-width]
+            # our model got 5 output: box,wall,holes,agent and floor
+            object_at_x_y = ""
+            output = continuoussokolvl.model(input)
+            idx_object = argmax(output)[1]
+            if !(agent_in_place)&&(idx_object==agent_idx)
+                agent_in_place = true
+            elseif (agent_in_place)&&(idx_object==agent_idx)
+                output[agent_idx] = 0
+                idx_object = argmax(output)[1]
+            end
+            object_at_x_y = objects_char_list[idx_object]
+            lvl_str = string(lvl_str,object_at_x_y)
+        end
+        lvl_str = string(lvl_str,"\n")
+    end
+    # check if there is at least one agent otherwise put one in the middle
+    if !(agent_in_place)
+        x_agent = Int(round(width/2))
+        y_agent = Int(round(height/2))
+        lvl_vec = Vector{Char}(lvl_str)
+        lvl_vec[x_agent+(y_agent-1)*5] = 'A'
+        lvl_str = String(lvl_vec)
+    end
+    continuoussokolvl.output_map[1] = lvl_str
+    return lvl_str
+end
+
 function save_ind(continuoussokolvl::ContinuousSokoLvl,path)
     f = open(path, "w+")
     write(f,"""{"genes":""")
