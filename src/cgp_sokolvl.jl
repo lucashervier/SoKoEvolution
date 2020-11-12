@@ -1,4 +1,5 @@
 import Cambrian: ind_parse
+import Base: isless
 
 struct CGPSokoLvl
     width::Int64
@@ -30,6 +31,9 @@ function CGPSokoLvl(cfg::NamedTuple,st::String)::CGPSokoLvl
     CGPSokoLvl(width,height,objects_char_list,agent_idx,output_map,cgp)
 end
 
+function isless(i1::CGPSokoLvl, i2::CGPSokoLvl)
+    all(i1.cgp.fitness .< i2.cgp.fitness)
+end
 
 function save_ind(ind::CGPSokoLvl,path::String)
     f = open(path, "w+")
@@ -142,4 +146,43 @@ function write_map!(cgp_lvl::CGPSokoLvl)
     end
     cgp_lvl.output_map[1] = lvl_str
     return lvl_str
+end
+
+import Cambrian.populate, Cambrian.evaluate
+
+mutable struct CGPSokoLvlEvolution <: Cambrian.AbstractEvolution
+    config::NamedTuple
+    logger::CambrianLogger
+    population::Array{CGPSokoLvl}
+    fitness::Function
+    gen::Int
+end
+
+function max_selection(pop::Array{CGPSokoLvl,1})
+    sort(pop)[end]
+end
+
+function oneplus_populate(e::CGPSokoLvlEvolution)
+    p1 = max_selection(e.population)
+    e.population[1] = p1
+    for i in 2:e.config.n_population
+        e.population[i] = mutate(p1)
+    end
+end
+
+function populate(e::CGPSokoLvlEvolution)
+     oneplus_populate(e)
+end
+
+function evaluate(e::CGPSokoLvlEvolution)
+    for i in eachindex(e.population)
+        e.population[i].cgp.fitness[:] = e.fitness(e.population[i])
+    end
+end
+
+function CGPSokoLvlEvolution(cfg::NamedTuple, fitness::Function;
+                      logfile=string("logs/", cfg.id, ".csv"))
+    logger = CambrianLogger(logfile)
+    population = Cambrian.initialize(CGPSokoLvl, cfg)
+    CGPSokoLvlEvolution(cfg, logger, population, fitness, 0)
 end
