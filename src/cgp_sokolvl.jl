@@ -170,8 +170,19 @@ function oneplus_populate(e::CGPSokoLvlEvolution)
     end
 end
 
+function nelitesplus_populate(e::CGPSokoLvlEvolution)
+    n_elites = e.config.n_elite
+    elites = sort(e.population)[end-(n_elites-1):end]
+    e.population[1:n_elites] = elites
+    for i in (n_elites+1):e.config.n_population
+        r = rand(1:n_elites)
+        e.population[i] = mutate(elites[r])
+    end
+end
+
 function populate(e::CGPSokoLvlEvolution)
-     oneplus_populate(e)
+     # oneplus_populate(e)
+     nelitesplus_populate(e)
 end
 
 function evaluate(e::CGPSokoLvlEvolution)
