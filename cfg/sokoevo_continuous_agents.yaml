@@ -7,7 +7,7 @@ n_elite: 2
 tournament_size: 3
 p_mutation: 0.3
 p_crossover: 0
-n_gen: 5000
+n_gen: 50000
 log_gen: 1
 save_gen: 20
 functions:
