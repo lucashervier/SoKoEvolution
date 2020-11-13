@@ -18,7 +18,7 @@ include("../src/utils.jl")
 include("../src/soko_agent.jl")
 #----------------------------Named Parameters----------------------------------#
 game_name = "sokoban3"
-expe_name = "sokoevo_cgpenvs"
+expe_name = "sokoevo_cgpenvs3"
 #----------------------------Griddly Resources---------------------------------#
 image_path = joinpath(@__DIR__,"..","resources","images")
 shader_path = joinpath(@__DIR__,"..","resources","shaders")
