@@ -18,7 +18,7 @@ include("../src/utils.jl")
 include("../src/soko_agent.jl")
 #----------------------------Named Parameters----------------------------------#
 game_name = "sokoban3"
-expe_name = "alternate_sokoevo_cgp"
+expe_name = "alternate_sokoevo_cgp2"
 #----------------------------Griddly Resources---------------------------------#
 image_path = joinpath(@__DIR__,"..","resources","images")
 shader_path = joinpath(@__DIR__,"..","resources","shaders")
@@ -74,12 +74,12 @@ end
 function log_gen(e::CGPSokoLvlEvolution)
     best = sort(e.population)[end]
     lvl_str = best.output_map[1]
-    nb_boxes,nb_holes,nb_objectives,initial_connectivity_number,random_reward = get_detailed_info(lvl_str)
+    nb_boxes,nb_holes,nb_objectives,initial_connectivity_number,random_reward,nb_walls = get_detailed_info(lvl_str)
     for d in 1:e.config.d_fitness
         maxs = map(i->i.cgp.fitness[d], e.population)
         with_logger(e.logger) do
-            @info Formatting.format("{1:05d},{2:e},{3:e},{4:e},{5:e},{6:e},{7:e},{8:e},{9:e}",
-                                    e.gen, maximum(maxs), mean(maxs), std(maxs),nb_boxes,nb_holes,nb_objectives,initial_connectivity_number,random_reward)
+            @info Formatting.format("{1:05d},{2:e},{3:e},{4:e},{5:e},{6:e},{7:e},{8:e},{9:e},{10:e}",
+                                    e.gen, maximum(maxs), mean(maxs), std(maxs),nb_boxes,nb_holes,nb_objectives,initial_connectivity_number,random_reward,nb_walls)
         end
     end
     flush(e.logger.stream)
@@ -122,6 +122,7 @@ function get_detailed_info(lvl_str::String)
 
     nb_boxes = count_items(1,initial_observation)
     nb_holes = count_items(4,initial_observation)
+    nb_walls = count_items(2,initial_observation)
     nb_objectives = min(nb_boxes,nb_holes)
 
     initial_connectivity = get_connectivity_map(initial_observation)
@@ -129,7 +130,7 @@ function get_detailed_info(lvl_str::String)
 
     random_reward = evaluate_random(lvl_str)
 
-    return [nb_boxes,nb_holes,nb_objectives,initial_connectivity_number,random_reward]
+    return [nb_boxes,nb_holes,nb_objectives,initial_connectivity_number,random_reward,nb_walls]
 end
 
 # the provided agent will make 200 steps on the given level, you can modify it
