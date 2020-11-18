@@ -5,13 +5,13 @@ objects_char_list: ["b","w","h","A","."]
 agent_idx: 4
 objectives_max: 10
 connectivity_max: 7
-life_env: 20
+life_env: 100
 # Cambrian.jl settings
 seed: 0
 d_fitness: 1
 n_population: 13
 n_elite: 2
-n_gen: 15000
+n_gen: 50000
 log_gen: 1
 save_gen: 0
 m_rate: 0.01
