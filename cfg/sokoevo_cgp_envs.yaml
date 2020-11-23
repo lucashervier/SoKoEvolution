@@ -5,7 +5,7 @@ objects_char_list: ["b","w","h","A","."]
 agent_idx: 4
 objectives_max: 10
 connectivity_max: 7
-life_env: 100
+life_env: 20
 # Cambrian.jl settings
 seed: 0
 d_fitness: 1
