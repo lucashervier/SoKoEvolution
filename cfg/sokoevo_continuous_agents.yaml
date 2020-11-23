@@ -10,6 +10,6 @@ p_crossover: 0
 n_gen: 50000
 log_gen: 1
 save_gen: 0
-life_env: 50
+life_env: 10
 functions:
   - f_add
