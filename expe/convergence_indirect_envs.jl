@@ -17,14 +17,22 @@ include("../src/utils.jl")
 #-----------------------------Configuration-----------------------------#
 cfg_envs = Cambrian.get_config("cfg/sokoevo_continuous_envs.yaml")
 
+# envs_model = Chain(
+#                     Dense(2,16),
+#                     Dense(16,32),
+#                     Dense(32,16),
+#                     Dense(16,5),
+#                     softmax
+#                     )
+
 envs_model = Chain(
-                    Dense(2,16),
+                    Dense(6,16),
                     Dense(16,32),
                     Dense(32,16),
                     Dense(16,5),
                     softmax
                     )
-expe_name = "envs_convergence"
+expe_name = "indirectenvs_convergence"
 # Overrides of the mutate function
 mutate(i::ContinuousSokoLvl) = mutate(i, cfg_envs.p_mutation)
 
@@ -58,7 +66,7 @@ ref_bit = from_str_to_bit(ref_lvl_str)
 
 function fitness_env(env::ContinuousSokoLvl)
     apply_continuoussokolvl_genes!(env)
-    lvl_str = write_map!(env)
+    lvl_str = write_map2!(env)
     lvl_bit = from_str_to_bit(lvl_str)
     return [-hamming(ref_bit,lvl_bit)/2]
 end

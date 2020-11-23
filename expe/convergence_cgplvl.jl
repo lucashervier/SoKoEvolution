@@ -14,7 +14,7 @@ include("../src/cgp_sokolvl.jl")
 #-----------------------------Configuration-----------------------------#
 cfg_envs = Cambrian.get_config("cfg/sokoevo_cgp_envs.yaml")
 
-expe_name = "cgp_envs_convergence"
+expe_name = "cgp_envs_convergence2"
 # Overrides of the mutate function
 mutate(i::CGPSokoLvl) = CGPSokoLvl(i.width,i.height,i.objects_char_list,i.agent_idx,[""],goldman_mutate(cfg_envs,i.cgp))
 
@@ -51,6 +51,17 @@ function fitness_env(env::CGPSokoLvl)
     lvl_str = write_map!(env)
     bit_map = from_str_to_bit(lvl_str)
     return [-hamming(ref_bit,bit_map)]
+end
+
+function log_gen(e::CGPSokoLvlEvolution)
+    for d in 1:e.config.d_fitness
+        maxs = map(i->i.cgp.fitness[d], e.population)
+        with_logger(e.logger) do
+            @info Formatting.format("{1:05d},{2:e},{3:e},{4:e}",
+                                    e.gen, maximum(maxs), mean(maxs), std(maxs))
+        end
+    end
+    flush(e.logger.stream)
 end
 
 # overrides save_gen for sNES population
