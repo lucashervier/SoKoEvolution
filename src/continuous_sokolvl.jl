@@ -172,7 +172,7 @@ function write_map2!(continuoussokolvl::ContinuousSokoLvl)
             else
                 phi = atan(y,x)
             end
-            input = [x,y,r,phi,x_pos,y_pos,(x_pos+(y_pos-1)*width)/(width*height),(x_pos+(y_pos-1)*width)/(width*height)-1,(x_pos+(y_pos-1)*width)/(width*height)+1,(x_pos+(y_pos-1)*width)/(width*height)+width,(x_pos+(y_pos-1)*width)/(width*height)-width]
+            input = [x,y,r,phi,x_pos,y_pos]
             # our model got 5 output: box,wall,holes,agent and floor
             object_at_x_y = ""
             output = continuoussokolvl.model(input)
