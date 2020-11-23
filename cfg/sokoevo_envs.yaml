@@ -6,13 +6,13 @@ agent_idx: 4
 d_fitness: 1
 n_elite: 2
 tournament_size: 3
-p_mutation: 0.01
+p_mutation: 0.25
 p_crossover: 0.1
 n_parents: 2
 n_population: 13
 n_gen: 50000
 log_gen: 1
-save_gen: 0
+save_gen: 100
 objectives_max: 10
 connectivity_max: 7
-life_env: 20
+life_env: 5
