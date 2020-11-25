@@ -232,6 +232,7 @@ function evaluate(e1::AbstractEvolution, e2::AbstractEvolution;save_localfit=tru
             score = e1.fitness(i,local_eval)
             objectives = - abs((nb_boxes - nb_holes))/nb_objectives -(nb_objectives>objectives_max)
             connectivity = -(initial_connectivity>connectivity_max)
+            diff = (nb_objectives<objectives_max) * 0.25 * nb_objectives/objectives_max
             e1.population[i].cgp.fitness[:] = [score + objectives + connectivity]
         end
     end
